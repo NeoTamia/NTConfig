@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.jvm.JvmTargetValidationMode
+import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 import java.net.URI
 
 plugins {
@@ -7,41 +9,70 @@ plugins {
     id("maven-publish")
 }
 
+
 group = "re.neotamia.config"
 // x-release-please-start-version
 version = "1.0.0-SNAPSHOT"
 // x-release-please-end
 
-repositories {
-    mavenCentral()
-    mavenLocal()
-    maven {
-        name = "jitpack"
-        url = uri("https://jitpack.io")
+allprojects {
+    apply(plugin = "kotlin")
+    apply(plugin = "maven-publish")
+    apply(plugin = "com.github.johnrengelman.shadow")
+    apply(plugin = "org.jetbrains.kotlin.plugin.serialization")
+
+    group = "re.neotamia.config"
+    version = rootProject.version
+
+    repositories {
+        mavenCentral()
+        mavenLocal()
+        maven {
+            name = "jitpack"
+            url = uri("https://jitpack.io")
+        }
+    }
+
+    dependencies {
+        compileOnly("org.jetbrains:annotations:26.0.2")
+
+        testImplementation(kotlin("test"))
+    }
+
+    java {
+        withSourcesJar()
+        withJavadocJar()
+    }
+
+    tasks.shadowJar {
+        archiveBaseName.set(rootProject.name)
+        archiveAppendix.set(if (project.path == ":") "" else project.name)
+    }
+
+    tasks.test {
+        useJUnitPlatform()
+    }
+
+    kotlin {
+        jvmToolchain(21)
+    }
+
+    publishing {
+        repositories {
+            mavenLocal()
+        }
     }
 }
 
+
+
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
-    implementation("com.charleskorn.kaml:kaml:0.78.0")
-
-    testImplementation(kotlin("test"))
+    api(projects.core)
+    api(projects.modules)
 }
 
-tasks.build {
-    dependsOn(tasks.shadowJar)
-}
-
-tasks.test {
-    useJUnitPlatform()
-}
-
-kotlin {
-    jvmToolchain(21)
-}
-
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile>().configureEach {
-    jvmTargetValidationMode.set(org.jetbrains.kotlin.gradle.dsl.jvm.JvmTargetValidationMode.WARNING)
+tasks.withType<KotlinJvmCompile>().configureEach {
+    jvmTargetValidationMode.set(JvmTargetValidationMode.WARNING)
 }
 
 publishing {
