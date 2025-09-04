@@ -64,14 +64,12 @@ allprojects {
 }
 
 dependencies {
-    implementation(projects.ntConfigCore)
-    implementation(projects.modules.ntConfigJson)
-    implementation(projects.modules.ntConfigToml)
-    implementation(projects.modules.ntConfigYaml)
+    api(projects.ntConfigCore)
+    api(projects.modules.ntConfigJson)
+    api(projects.modules.ntConfigToml)
+    api(projects.modules.ntConfigYaml)
 
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
-    implementation("com.charleskorn.kaml:kaml:0.94.0")
-    implementation("com.akuleshov7:ktoml-core:0.7.1")
+    compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-core:1.9.0")
 }
 
 tasks.withType<KotlinJvmCompile>().configureEach {
