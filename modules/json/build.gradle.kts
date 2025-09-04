@@ -1,6 +1,6 @@
 group = "re.neotamia.config.json"
 
 dependencies {
-    api(projects.core)
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
+    api(projects.ntConfigCore)
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
 }

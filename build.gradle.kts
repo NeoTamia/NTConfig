@@ -63,11 +63,15 @@ allprojects {
     }
 }
 
-
-
 dependencies {
-    api(projects.core)
-    api(projects.modules)
+    implementation(projects.ntConfigCore)
+    implementation(projects.modules.ntConfigJson)
+    implementation(projects.modules.ntConfigToml)
+    implementation(projects.modules.ntConfigYaml)
+
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+    implementation("com.charleskorn.kaml:kaml:0.94.0")
+    implementation("com.akuleshov7:ktoml-core:0.7.1")
 }
 
 tasks.withType<KotlinJvmCompile>().configureEach {
