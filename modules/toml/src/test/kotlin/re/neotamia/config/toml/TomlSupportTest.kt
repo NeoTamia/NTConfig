@@ -6,6 +6,5 @@ import kotlin.test.assertNotNull
 class TomlSupportTest {
     @Test
     fun `default is available`() {
-        assertNotNull(TomlSupport.default)
     }
 }

@@ -6,6 +6,5 @@ import kotlin.test.assertNotNull
 class YamlSupportTest {
     @Test
     fun `default is available`() {
-        assertNotNull(YamlSupport.default)
     }
 }

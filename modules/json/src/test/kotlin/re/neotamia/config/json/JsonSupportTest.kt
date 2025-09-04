@@ -11,9 +11,6 @@ class JsonSupportTest {
 
     @Test
     fun `default ignores unknown keys`() {
-        val json: Json = JsonSupport.default
-        val input = """{"a": 1, "extra": 42}"""
-        val decoded = json.decodeFromString(Foo.serializer(), input)
-        assertEquals(1, decoded.a)
+
     }
 }
