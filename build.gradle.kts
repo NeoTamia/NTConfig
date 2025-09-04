@@ -9,7 +9,6 @@ plugins {
     id("maven-publish")
 }
 
-
 group = "re.neotamia.config"
 // x-release-please-start-version
 version = "1.0.0-SNAPSHOT"
