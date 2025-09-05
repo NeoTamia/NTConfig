@@ -194,11 +194,12 @@ fun main() {
 //    println(loadedYamlConfig == config)
 
     val ntConfig = NTConfig()
-    ntConfig.registerSerializer(YamlSerializer(ntConfig.typeAdapterRegistry))
-    ntConfig.registerSerializer(JsonSerializer(ntConfig.typeAdapterRegistry))
-    ntConfig.registerSerializer(TomlSerializer(ntConfig.typeAdapterRegistry))
+    ntConfig.registerSerializer(YamlSerializer())
+    ntConfig.registerSerializer(JsonSerializer())
+    ntConfig.registerSerializer(TomlSerializer())
     ntConfig.typeAdapterRegistry.register(ResourceLocation::class.java, ResourceLocationTypeAdapter())
 
-    val file = Path.of("config.toml")
-    ntConfig.save(file, config)
+    ntConfig.save(Path.of("config.yaml"), config)
+    ntConfig.save(Path.of("config.json"), config)
+    ntConfig.save(Path.of("config.toml"), config)
 }
