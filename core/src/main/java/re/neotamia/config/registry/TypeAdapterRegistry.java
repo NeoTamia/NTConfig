@@ -1,5 +1,6 @@
 package re.neotamia.config.registry;
 
+import org.jetbrains.annotations.NotNull;
 import re.neotamia.config.adapter.TypeAdapter;
 
 import java.util.HashMap;
@@ -17,7 +18,7 @@ public class TypeAdapterRegistry {
         return (TypeAdapter<T>) adapters.get(type);
     }
 
-    public Map<Class<?>, TypeAdapter<?>> getAdapters() {
+    public @NotNull Map<Class<?>, TypeAdapter<?>> getAdapters() {
         return adapters;
     }
 }

@@ -1,9 +1,14 @@
 package re.neotamia.config;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import re.neotamia.config.adapter.AdapterContext;
 import re.neotamia.config.adapter.TypeAdapter;
 import re.neotamia.config.annotation.*;
+import re.neotamia.config.migration.ConfigMigrationManager;
+import re.neotamia.config.migration.MergeStrategy;
+import re.neotamia.config.migration.MigrationHook;
+import re.neotamia.config.migration.VersionUtils;
 import re.neotamia.config.naming.NamingStrategy;
 import re.neotamia.config.registry.SerializerRegistry;
 import re.neotamia.config.registry.TypeAdapterRegistry;
@@ -23,9 +28,10 @@ import java.util.Map;
 public class NTConfig {
     private final TypeAdapterRegistry typeAdapterRegistry = new TypeAdapterRegistry();
     private final SerializerRegistry serializerRegistry = new SerializerRegistry();
-    private NamingStrategy namingStrategy = NamingStrategy.IDENTITY;
+    private @NotNull NamingStrategy namingStrategy = NamingStrategy.IDENTITY;
+    private ConfigMigrationManager migrationManager;
 
-    public <T> void save(Path path, T config) {
+    public <T> void save(@NotNull Path path, T config) {
         var serializer = serializerRegistry.getByExtension(path);
         if (serializer == null) throw new IllegalArgumentException("No serializer found for " + path);
         try {
@@ -43,7 +49,7 @@ public class NTConfig {
         }
     }
 
-    public <T> T load(Path path, Class<T> clazz) {
+    public <T> @Nullable T load(@NotNull Path path, @NotNull Class<T> clazz) {
         var serializer = serializerRegistry.getByExtension(path);
         if (serializer == null) throw new IllegalArgumentException("No serializer found for " + path);
         try {
@@ -69,11 +75,11 @@ public class NTConfig {
         serializerRegistry.register(serializer);
     }
 
-    public TypeAdapterRegistry getTypeAdapterRegistry() {
+    public @NotNull TypeAdapterRegistry getTypeAdapterRegistry() {
         return typeAdapterRegistry;
     }
 
-    public SerializerRegistry getSerializerRegistry() {
+    public @NotNull SerializerRegistry getSerializerRegistry() {
         return serializerRegistry;
     }
 
@@ -81,16 +87,120 @@ public class NTConfig {
         return namingStrategy;
     }
 
-    public void setNamingStrategy(NamingStrategy namingStrategy) {
+    public void setNamingStrategy(@Nullable NamingStrategy namingStrategy) {
         this.namingStrategy = namingStrategy != null ? namingStrategy : NamingStrategy.IDENTITY;
     }
 
-    private boolean isPrimitiveLike(Class<?> type) {
+    /**
+     * Loads a configuration with migration support.
+     * If the loaded configuration version differs from the current template version,
+     * migration will be performed according to the specified strategy.
+     *
+     * @param path            the configuration file path
+     * @param clazz           the configuration class
+     * @param currentTemplate the current configuration template with new defaults and version
+     * @param strategy        the merge strategy to use (null for default)
+     * @param <T>             the configuration type
+     * @return the migration result containing the loaded/migrated configuration
+     */
+    public <T> ConfigMigrationManager.@NotNull MigrationResult<T> loadWithMigration(@NotNull Path path, @NotNull Class<T> clazz, @NotNull T currentTemplate, MergeStrategy strategy) {
+        ensureMigrationManager();
+
+        // Load the existing configuration
+        T loadedConfig;
+        try {
+            loadedConfig = load(path, clazz);
+        } catch (Exception e) {
+            if (!Files.exists(path)) {
+                save(path, currentTemplate);
+                return new ConfigMigrationManager.MigrationResult<>(currentTemplate, false, null, VersionUtils.extractVersion(currentTemplate), null);
+            }
+            throw e;
+        }
+
+        ConfigMigrationManager.MigrationResult<T> result = migrationManager.migrate(path, loadedConfig, currentTemplate, strategy);
+
+        if (result.wasMigrated())
+            save(path, result.config());
+
+        return result;
+    }
+
+    /**
+     * Loads a configuration with migration support using the default merge strategy.
+     */
+    public <T> ConfigMigrationManager.MigrationResult<T> loadWithMigration(@NotNull Path path, @NotNull Class<T> clazz, @NotNull T currentTemplate) {
+        return loadWithMigration(path, clazz, currentTemplate, null);
+    }
+
+    /**
+     * Loads and updates a configuration, always saving the result.
+     * This is useful for ensuring configuration files are up to date with current templates.
+     */
+    public <T> ConfigMigrationManager.@NotNull MigrationResult<T> loadAndUpdate(@NotNull Path path, @NotNull Class<T> clazz, @NotNull T currentTemplate, MergeStrategy strategy) {
+        ConfigMigrationManager.MigrationResult<T> result = loadWithMigration(path, clazz, currentTemplate, strategy);
+        // Always save to ensure a file is up to date (comments, formatting, etc.)
+        save(path, result.config());
+        return result;
+    }
+
+    /**
+     * Loads and updates a configuration using the default merge strategy.
+     */
+    public <T> ConfigMigrationManager.MigrationResult<T> loadAndUpdate(@NotNull Path path, @NotNull Class<T> clazz, @NotNull T currentTemplate) {
+        return loadAndUpdate(path, clazz, currentTemplate, null);
+    }
+
+    /**
+     * Gets the migration manager, creating it if necessary.
+     */
+    public ConfigMigrationManager getMigrationManager() {
+        ensureMigrationManager();
+        return migrationManager;
+    }
+
+    /**
+     * Sets a custom migration manager.
+     */
+    public void setMigrationManager(ConfigMigrationManager migrationManager) {
+        this.migrationManager = migrationManager;
+    }
+
+    /**
+     * Adds a migration hook.
+     */
+    public void addMigrationHook(MigrationHook hook) {
+        ensureMigrationManager();
+        migrationManager.addHook(hook);
+    }
+
+    /**
+     * Sets the default merge strategy for migrations.
+     */
+    public void setDefaultMergeStrategy(MergeStrategy strategy) {
+        ensureMigrationManager();
+        migrationManager.setDefaultMergeStrategy(strategy);
+    }
+
+    /**
+     * Gets the default merge strategy for migrations.
+     */
+    public MergeStrategy getDefaultMergeStrategy() {
+        ensureMigrationManager();
+        return migrationManager.getDefaultMergeStrategy();
+    }
+
+    private void ensureMigrationManager() {
+        if (migrationManager == null)
+            migrationManager = new ConfigMigrationManager();
+    }
+
+    private boolean isPrimitiveLike(@NotNull Class<?> type) {
         return type.isPrimitive() || type == String.class || Number.class.isAssignableFrom(type) || type == Boolean.class || type == Character.class;
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private <T> T castScalar(Object node, Class<T> type) {
+    private <T> T castScalar(@Nullable Object node, @NotNull Class<T> type) {
         if (node == null) return null;
         if (type.isInstance(node)) return (T) node;
         if (type == String.class) return (T) String.valueOf(node);
@@ -109,7 +219,7 @@ public class NTConfig {
         throw new IllegalArgumentException("Cannot cast scalar node " + node + " to " + type.getName());
     }
 
-    private String resolveFieldName(Field f) {
+    private String resolveFieldName(@NotNull Field f) {
         var name = f.getName();
         if (f.isAnnotationPresent(SerializedName.class))
             name = f.getAnnotation(SerializedName.class).value();
@@ -122,7 +232,7 @@ public class NTConfig {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> T fromTree(Object node, Class<T> type, Field field, AdapterContext ctx) throws Exception {
+    private <T> T fromTree(@Nullable Object node, @NotNull Class<T> type, @Nullable Field field, @NotNull AdapterContext ctx) throws Exception {
         if (node == null) return null;
         TypeAdapter<T> adapter = typeAdapterRegistry.get(type);
         if (adapter != null)
@@ -133,7 +243,6 @@ public class NTConfig {
         if (List.class.isAssignableFrom(type)) {
             if (!(node instanceof List<?> inList)) throw new IllegalArgumentException("Expected list for field " + fieldName);
 
-            // Determine element type
             Class<?> elemType = Object.class;
             if (field != null) {
                 Type g = field.getGenericType();
@@ -177,7 +286,6 @@ public class NTConfig {
             }
             return (T) out;
         }
-        // POJO
         if (!(node instanceof Map<?, ?> map))
             throw new IllegalArgumentException("Expected object for type " + type.getName());
 
@@ -198,7 +306,7 @@ public class NTConfig {
     }
 
     @SuppressWarnings("unchecked")
-    private Object toTree(Object obj, AdapterContext ctx) throws Exception {
+    private Object toTree(@Nullable Object obj, @NotNull AdapterContext ctx) throws Exception {
         if (obj == null) return null;
         Class<?> type = obj.getClass();
         TypeAdapter<Object> adapter = typeAdapterRegistry.get((Class<Object>) type);
@@ -209,9 +317,8 @@ public class NTConfig {
         if (obj instanceof List<?> list) {
             List<Object> out = new ArrayList<>(list.size());
             int idx = 0;
-            for (Object item : list) {
+            for (Object item : list)
                 out.add(toTree(item, ctx.child(String.valueOf(idx++), null)));
-            }
             return out;
         }
         if (obj instanceof Map<?, ?> map) {
@@ -222,7 +329,7 @@ public class NTConfig {
             }
             return out;
         }
-        // POJO
+
         Map<String, Object> out = new LinkedHashMap<>();
         for (Field f : type.getDeclaredFields()) {
             if (Modifier.isStatic(f.getModifiers())) continue;
@@ -237,12 +344,11 @@ public class NTConfig {
         return out;
     }
 
-    private CommentedTree toCommentedTree(Object obj, AdapterContext ctx) throws Exception {
+    private @NotNull CommentedTree toCommentedTree(@Nullable Object obj, @NotNull AdapterContext ctx) throws Exception {
         Object tree = toTree(obj, ctx);
         CommentedTree commentedTree = new CommentedTree(tree);
 
         if (obj != null && !isPrimitiveLike(obj.getClass()) && !obj.getClass().isEnum() && !(obj instanceof List<?>) && !(obj instanceof Map<?, ?>)) {
-            // POJO - collect header comment from @ConfigHeader
             Class<?> type = obj.getClass();
             if (type.isAnnotationPresent(ConfigHeader.class)) {
                 String headerText = type.getAnnotation(ConfigHeader.class).value();
@@ -251,14 +357,13 @@ public class NTConfig {
                 }
             }
 
-            // POJO - collect field comments
             collectFieldComments(type, commentedTree);
         }
 
         return commentedTree;
     }
 
-    private void collectFieldComments(Class<?> type, CommentedTree commentedTree) {
+    private void collectFieldComments(@NotNull Class<?> type, @NotNull CommentedTree commentedTree) {
         for (Field f : type.getDeclaredFields()) {
             if (Modifier.isStatic(f.getModifiers())) continue;
             if (f.isAnnotationPresent(Exclude.class)) continue;
@@ -267,19 +372,16 @@ public class NTConfig {
             String fieldName = resolveFieldName(f);
             String comment = getCommentFromAnnotation(f);
 
-            if (comment != null) {
+            if (comment != null)
                 commentedTree.addFieldComment(fieldName, comment);
-            }
         }
     }
 
-    private static @Nullable String getCommentFromAnnotation(Field f) {
+    private static @Nullable String getCommentFromAnnotation(@NotNull Field f) {
         String comment = null;
 
-        // Check @Comment annotation
         if (f.isAnnotationPresent(Comment.class))
             comment = f.getAnnotation(Comment.class).value();
-        // Check @ConfigProperty description (value())
         else if (f.isAnnotationPresent(ConfigProperty.class)) {
             String desc = f.getAnnotation(ConfigProperty.class).value();
             if (desc != null && !desc.trim().isEmpty())

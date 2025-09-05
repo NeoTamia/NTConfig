@@ -70,3 +70,6 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+config.*
+config-backups/

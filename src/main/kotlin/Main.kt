@@ -1,24 +1,15 @@
 package re.neotamia.config.main;
 
-import com.charleskorn.kaml.Yaml
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.Serializable
 import re.neotamia.config.NTConfig
 import re.neotamia.config.adapter.TypeAdapter
 import re.neotamia.config.annotation.ConfigHeader
 import re.neotamia.config.annotation.ConfigProperty
-import re.neotamia.config.json.JsonConfigFormat
+import re.neotamia.config.annotation.ConfigVersion
 import re.neotamia.config.json.JsonSerializer
 import re.neotamia.config.naming.NamingStrategy
-import re.neotamia.config.registry.SerializerRegistry
-import re.neotamia.config.registry.TypeAdapterRegistry
-import re.neotamia.config.toml.TomlConfigFormat
 import re.neotamia.config.toml.TomlSerializer
-import re.neotamia.config.yaml.YamlConfigFormat
 import re.neotamia.config.yaml.YamlSerializer
-import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.extension
 
 enum class Test {
     UWU,
@@ -33,7 +24,8 @@ class ResourceLocation(val namespace: String, val path: String) {
 class Config(
     @ConfigProperty("The name of the configuration")
     val name: String = "Config",
-    val version: Int = 1,
+    @ConfigVersion
+    val version: Int = 2,
     @ConfigProperty(name = "isEnabled", value = "Whether the configuration is enabled")
     val enabled: Boolean = true,
     @ConfigProperty(exclude = true)
@@ -50,6 +42,8 @@ class Config(
     val test: Test = Test.OWO,
     val resource: ResourceLocation = ResourceLocation("example:resource_path"),
     val uneVariableOuLeNomPeutEtreTresLong: Boolean = true,
+    val toto: Int = 42,
+    val titi: Int = 24
 ) {
     override fun toString(): String {
         return "Config(name='$name', version=$version, enabled=$enabled, decimals=$decimals, double=$double, items=$items, settings=$settings, nested=$nested, multiline='$multiline')"
@@ -159,40 +153,7 @@ class ResourceLocationTypeAdapter : TypeAdapter<ResourceLocation> {
 }
 
 fun main() {
-//    val ntConfig = NTConfig()
-//    ntConfig.registry.registerConfigFormat(YamlConfigFormat())
-//    ntConfig.registry.registerConfigFormat(JsonConfigFormat())
-//    ntConfig.registry.registerConfigFormat(TomlConfigFormat())
-//
-//    val config = Config(version = 5)
-//    val file = Path.of("config.toml")
-//    ntConfig.save(file, config)
-//
-//    val loadedConfig = ntConfig.load<Config>(file)
-//    println("Loaded Config: $loadedConfig")
-//    println("Loaded Config == Original Config: ${loadedConfig == config}")
-
-//    val serializerRegistry = SerializerRegistry()
-//    val registry = TypeAdapterRegistry()
-//
-//    registry.register(ResourceLocation::class.java, ResourceLocationTypeAdapter())
-//
-//    serializerRegistry.register(YamlSerializer(registry))
-//    serializerRegistry.register(JsonSerializer(registry))
-//    serializerRegistry.register(TomlSerializer(registry))
-
     val config = Config()
-//    Files.write(Path.of("config.json"), serializerRegistry.getSerializerFromExtension("json").serialize(config).toByteArray())
-//    Files.write(Path.of("config.yaml"), serializerRegistry.getSerializerFromExtension("yaml").serialize(config).toByteArray())
-//    Files.write(Path.of("config.toml"), serializerRegistry.getSerializerFromExtension("toml").serialize(config).toByteArray())
-//
-//    val loadedJsonConfig = serializerRegistry.getSerializerFromExtension("json").deserialize(Files.readString(Path.of("config.json")), Config::class.java)
-//    val loadedTomlConfig = serializerRegistry.getSerializerFromExtension("yaml").deserialize(Files.readString(Path.of("config.yaml")), Config::class.java)
-//    val loadedYamlConfig = serializerRegistry.getSerializerFromExtension("toml").deserialize(Files.readString(Path.of("config.toml")), Config::class.java)
-//
-//    println(loadedJsonConfig == config)
-//    println(loadedTomlConfig == config)
-//    println(loadedYamlConfig == config)
 
     val ntConfig = NTConfig()
     ntConfig.namingStrategy = NamingStrategy.KEBAB_CASE
@@ -201,7 +162,10 @@ fun main() {
     ntConfig.registerSerializer(TomlSerializer())
     ntConfig.typeAdapterRegistry.register(ResourceLocation::class.java, ResourceLocationTypeAdapter())
 
-    ntConfig.save(Path.of("config.yaml"), config)
-    ntConfig.save(Path.of("config.json"), config)
-    ntConfig.save(Path.of("config.toml"), config)
+//    ntConfig.save(Path.of("config.yaml"), config)
+//    ntConfig.save(Path.of("config.json"), config)
+//    ntConfig.save(Path.of("config.toml"), config)
+
+    val result = ntConfig.loadWithMigration(Path.of("config.yaml"), Config::class.java, config)
+    println(result)
 }

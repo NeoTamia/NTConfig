@@ -3,6 +3,7 @@ package re.neotamia.config.yaml;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import org.jetbrains.annotations.NotNull;
 import re.neotamia.config.CommentedTree;
 import re.neotamia.config.Serializer;
 
@@ -31,7 +32,7 @@ public class YamlSerializer implements Serializer {
     }
 
     @Override
-    public String fromCommentedTree(CommentedTree commentedTree) throws JsonProcessingException {
+    public String fromCommentedTree(@NotNull CommentedTree commentedTree) throws JsonProcessingException {
         String yamlContent = mapper.writeValueAsString(commentedTree.getData());
 
         if (!commentedTree.hasComments()) {
@@ -57,7 +58,7 @@ public class YamlSerializer implements Serializer {
         return result.toString();
     }
 
-    private String addCommentsToYaml(String yamlContent, Map<String, String> fieldComments) {
+    private @NotNull String addCommentsToYaml(@NotNull String yamlContent, @NotNull Map<String, String> fieldComments) {
         String[] lines = yamlContent.split("\n");
         StringBuilder result = new StringBuilder();
 
@@ -80,7 +81,7 @@ public class YamlSerializer implements Serializer {
     }
 
     @Override
-    public Set<String> getSupportedExtensions() {
+    public @NotNull Set<String> getSupportedExtensions() {
         return Set.of("yaml", "yml");
     }
 }

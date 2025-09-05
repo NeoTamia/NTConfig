@@ -2,6 +2,7 @@ package re.neotamia.config.json;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.jetbrains.annotations.NotNull;
 import re.neotamia.config.Serializer;
 
 import java.util.Set;
@@ -22,7 +23,7 @@ public class JsonSerializer implements Serializer {
     }
 
     @Override
-    public Set<String> getSupportedExtensions() {
+    public @NotNull Set<String> getSupportedExtensions() {
         return Set.of("json");
     }
 }

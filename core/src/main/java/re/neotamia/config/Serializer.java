@@ -1,5 +1,7 @@
 package re.neotamia.config;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Set;
 
 public interface Serializer {
@@ -17,7 +19,7 @@ public interface Serializer {
      * Render a CommentedTree with field comments into raw text in this serializer's format.
      * Default implementation ignores comments and delegates to fromTree.
      */
-    default String fromCommentedTree(CommentedTree commentedTree) throws Exception {
+    default String fromCommentedTree(@NotNull CommentedTree commentedTree) throws Exception {
         return fromTree(commentedTree.getData());
     }
 

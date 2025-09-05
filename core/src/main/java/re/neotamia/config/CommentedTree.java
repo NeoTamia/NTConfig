@@ -1,5 +1,8 @@
 package re.neotamia.config;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -9,8 +12,8 @@ import java.util.Map;
  */
 public class CommentedTree {
     private final Object data;
-    private final Map<String, String> fieldComments;
-    private String headerComment;
+    private final @NotNull Map<String, String> fieldComments;
+    private @Nullable String headerComment;
 
     public CommentedTree(Object data) {
         this(data, new LinkedHashMap<>(), null);
@@ -20,7 +23,7 @@ public class CommentedTree {
         this(data, fieldComments, null);
     }
 
-    public CommentedTree(Object data, Map<String, String> fieldComments, String headerComment) {
+    public CommentedTree(Object data, Map<String, String> fieldComments, @Nullable String headerComment) {
         this.data = data;
         this.fieldComments = new LinkedHashMap<>(fieldComments);
         this.headerComment = headerComment;
@@ -30,11 +33,11 @@ public class CommentedTree {
         return data;
     }
 
-    public Map<String, String> getFieldComments() {
+    public @NotNull Map<String, String> getFieldComments() {
         return fieldComments;
     }
 
-    public void addFieldComment(String fieldName, String comment) {
+    public void addFieldComment(String fieldName, @Nullable String comment) {
         if (comment != null && !comment.trim().isEmpty()) {
             fieldComments.put(fieldName, comment.trim());
         }
@@ -44,13 +47,12 @@ public class CommentedTree {
         return fieldComments.get(fieldName);
     }
 
-    public String getHeaderComment() {
+    public @Nullable String getHeaderComment() {
         return headerComment;
     }
 
-    public void setHeaderComment(String headerComment) {
-        this.headerComment = (headerComment != null && !headerComment.trim().isEmpty()) ? 
-            headerComment.trim() : null;
+    public void setHeaderComment(@Nullable String headerComment) {
+        this.headerComment = (headerComment != null && !headerComment.trim().isEmpty()) ? headerComment.trim() : null;
     }
 
     public boolean hasHeaderComment() {

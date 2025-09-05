@@ -2,6 +2,7 @@ package re.neotamia.config.toml;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.dataformat.toml.TomlMapper;
+import org.jetbrains.annotations.NotNull;
 import re.neotamia.config.CommentedTree;
 import re.neotamia.config.Serializer;
 
@@ -27,7 +28,7 @@ public class TomlSerializer implements Serializer {
     }
 
     @Override
-    public String fromCommentedTree(CommentedTree commentedTree) throws JsonProcessingException {
+    public String fromCommentedTree(@NotNull CommentedTree commentedTree) throws JsonProcessingException {
         String tomlContent = mapper.writeValueAsString(commentedTree.getData());
 
         if (!commentedTree.hasComments()) {
@@ -53,7 +54,7 @@ public class TomlSerializer implements Serializer {
         return result.toString();
     }
 
-    private String addCommentsToToml(String tomlContent, Map<String, String> fieldComments) {
+    private @NotNull String addCommentsToToml(@NotNull String tomlContent, @NotNull Map<String, String> fieldComments) {
         String[] lines = tomlContent.split("\n");
         StringBuilder result = new StringBuilder();
 
@@ -75,7 +76,7 @@ public class TomlSerializer implements Serializer {
     }
 
     @Override
-    public Set<String> getSupportedExtensions() {
+    public @NotNull Set<String> getSupportedExtensions() {
         return Set.of("toml");
     }
 }

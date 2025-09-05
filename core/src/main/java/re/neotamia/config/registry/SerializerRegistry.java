@@ -1,5 +1,6 @@
 package re.neotamia.config.registry;
 
+import org.jetbrains.annotations.NotNull;
 import re.neotamia.config.Serializer;
 
 import java.nio.file.Path;
@@ -13,7 +14,7 @@ public class SerializerRegistry {
         serializers.add(serializer);
     }
 
-    public Serializer getSerializerFromExtension(String extension) {
+    public @NotNull Serializer getSerializerFromExtension(@NotNull String extension) {
         for (Serializer serializer : serializers) {
             if (serializer.getSupportedExtensions().contains(extension.toLowerCase()))
                 return serializer;
@@ -21,11 +22,11 @@ public class SerializerRegistry {
         throw new IllegalArgumentException("No serializer found for extension: " + extension);
     }
 
-    public Serializer getByExtension(Path path) {
+    public Serializer getByExtension(@NotNull Path path) {
         return this.getSerializerFromExtension(path.toString().substring(path.toString().lastIndexOf('.') + 1));
     }
 
-    public List<Serializer> getSerializers() {
+    public @NotNull List<Serializer> getSerializers() {
         return serializers;
     }
 }
