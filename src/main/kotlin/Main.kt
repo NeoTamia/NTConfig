@@ -9,6 +9,7 @@ import re.neotamia.config.annotation.ConfigHeader
 import re.neotamia.config.annotation.ConfigProperty
 import re.neotamia.config.json.JsonConfigFormat
 import re.neotamia.config.json.JsonSerializer
+import re.neotamia.config.naming.NamingStrategy
 import re.neotamia.config.registry.SerializerRegistry
 import re.neotamia.config.registry.TypeAdapterRegistry
 import re.neotamia.config.toml.TomlConfigFormat
@@ -47,7 +48,8 @@ class Config(
         It preserves line breaks.
     """.trimIndent(),
     val test: Test = Test.OWO,
-    val resource: ResourceLocation = ResourceLocation("example:resource_path")
+    val resource: ResourceLocation = ResourceLocation("example:resource_path"),
+    val uneVariableOuLeNomPeutEtreTresLong: Boolean = true,
 ) {
     override fun toString(): String {
         return "Config(name='$name', version=$version, enabled=$enabled, decimals=$decimals, double=$double, items=$items, settings=$settings, nested=$nested, multiline='$multiline')"
@@ -156,7 +158,6 @@ class ResourceLocationTypeAdapter : TypeAdapter<ResourceLocation> {
     }
 }
 
-@OptIn(ExperimentalSerializationApi::class)
 fun main() {
 //    val ntConfig = NTConfig()
 //    ntConfig.registry.registerConfigFormat(YamlConfigFormat())
@@ -194,6 +195,7 @@ fun main() {
 //    println(loadedYamlConfig == config)
 
     val ntConfig = NTConfig()
+    ntConfig.namingStrategy = NamingStrategy.KEBAB_CASE
     ntConfig.registerSerializer(YamlSerializer())
     ntConfig.registerSerializer(JsonSerializer())
     ntConfig.registerSerializer(TomlSerializer())

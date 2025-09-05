@@ -1,11 +1,10 @@
 package re.neotamia.config;
 
+import org.jetbrains.annotations.Nullable;
 import re.neotamia.config.adapter.AdapterContext;
 import re.neotamia.config.adapter.TypeAdapter;
-import re.neotamia.config.annotation.Comment;
-import re.neotamia.config.annotation.ConfigProperty;
-import re.neotamia.config.annotation.Exclude;
-import re.neotamia.config.annotation.SerializedName;
+import re.neotamia.config.annotation.*;
+import re.neotamia.config.naming.NamingStrategy;
 import re.neotamia.config.registry.SerializerRegistry;
 import re.neotamia.config.registry.TypeAdapterRegistry;
 
@@ -24,6 +23,7 @@ import java.util.Map;
 public class NTConfig {
     private final TypeAdapterRegistry typeAdapterRegistry = new TypeAdapterRegistry();
     private final SerializerRegistry serializerRegistry = new SerializerRegistry();
+    private NamingStrategy namingStrategy = NamingStrategy.IDENTITY;
 
     public <T> void save(Path path, T config) {
         var serializer = serializerRegistry.getByExtension(path);
@@ -77,11 +77,19 @@ public class NTConfig {
         return serializerRegistry;
     }
 
+    public NamingStrategy getNamingStrategy() {
+        return namingStrategy;
+    }
+
+    public void setNamingStrategy(NamingStrategy namingStrategy) {
+        this.namingStrategy = namingStrategy != null ? namingStrategy : NamingStrategy.IDENTITY;
+    }
+
     private boolean isPrimitiveLike(Class<?> type) {
         return type.isPrimitive() || type == String.class || Number.class.isAssignableFrom(type) || type == Boolean.class || type == Character.class;
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private <T> T castScalar(Object node, Class<T> type) {
         if (node == null) return null;
         if (type.isInstance(node)) return (T) node;
@@ -102,13 +110,15 @@ public class NTConfig {
     }
 
     private String resolveFieldName(Field f) {
+        var name = f.getName();
         if (f.isAnnotationPresent(SerializedName.class))
-            return f.getAnnotation(SerializedName.class).value();
+            name = f.getAnnotation(SerializedName.class).value();
         if (f.isAnnotationPresent(ConfigProperty.class)) {
             String n = f.getAnnotation(ConfigProperty.class).name();
-            if (n != null && !n.isEmpty()) return n;
+            if (n != null && !n.isEmpty())
+                name = n;
         }
-        return f.getName();
+        return namingStrategy.transform(name);
     }
 
     @SuppressWarnings("unchecked")
@@ -230,13 +240,21 @@ public class NTConfig {
     private CommentedTree toCommentedTree(Object obj, AdapterContext ctx) throws Exception {
         Object tree = toTree(obj, ctx);
         CommentedTree commentedTree = new CommentedTree(tree);
-        
-        if (obj != null && !isPrimitiveLike(obj.getClass()) && !obj.getClass().isEnum() && 
-            !(obj instanceof List<?>) && !(obj instanceof Map<?, ?>)) {
+
+        if (obj != null && !isPrimitiveLike(obj.getClass()) && !obj.getClass().isEnum() && !(obj instanceof List<?>) && !(obj instanceof Map<?, ?>)) {
+            // POJO - collect header comment from @ConfigHeader
+            Class<?> type = obj.getClass();
+            if (type.isAnnotationPresent(ConfigHeader.class)) {
+                String headerText = type.getAnnotation(ConfigHeader.class).value();
+                if (headerText != null && !headerText.trim().isEmpty()) {
+                    commentedTree.setHeaderComment(headerText);
+                }
+            }
+
             // POJO - collect field comments
-            collectFieldComments(obj.getClass(), commentedTree);
+            collectFieldComments(type, commentedTree);
         }
-        
+
         return commentedTree;
     }
 
@@ -245,25 +263,28 @@ public class NTConfig {
             if (Modifier.isStatic(f.getModifiers())) continue;
             if (f.isAnnotationPresent(Exclude.class)) continue;
             if (f.isAnnotationPresent(ConfigProperty.class) && f.getAnnotation(ConfigProperty.class).exclude()) continue;
-            
+
             String fieldName = resolveFieldName(f);
-            String comment = null;
-            
-            // Check @Comment annotation
-            if (f.isAnnotationPresent(Comment.class)) {
-                comment = f.getAnnotation(Comment.class).value();
-            }
-            // Check @ConfigProperty description (value())
-            else if (f.isAnnotationPresent(ConfigProperty.class)) {
-                String desc = f.getAnnotation(ConfigProperty.class).value();
-                if (desc != null && !desc.trim().isEmpty()) {
-                    comment = desc;
-                }
-            }
-            
+            String comment = getCommentFromAnnotation(f);
+
             if (comment != null) {
                 commentedTree.addFieldComment(fieldName, comment);
             }
         }
+    }
+
+    private static @Nullable String getCommentFromAnnotation(Field f) {
+        String comment = null;
+
+        // Check @Comment annotation
+        if (f.isAnnotationPresent(Comment.class))
+            comment = f.getAnnotation(Comment.class).value();
+        // Check @ConfigProperty description (value())
+        else if (f.isAnnotationPresent(ConfigProperty.class)) {
+            String desc = f.getAnnotation(ConfigProperty.class).value();
+            if (desc != null && !desc.trim().isEmpty())
+                comment = desc;
+        }
+        return comment;
     }
 }

@@ -33,19 +33,34 @@ public class YamlSerializer implements Serializer {
     @Override
     public String fromCommentedTree(CommentedTree commentedTree) throws JsonProcessingException {
         String yamlContent = mapper.writeValueAsString(commentedTree.getData());
-        
+
         if (!commentedTree.hasComments()) {
             return yamlContent;
         }
-        
-        // Post-process YAML to add comments
-        return addCommentsToYaml(yamlContent, commentedTree.getFieldComments());
+
+        // Add header comment if present
+        StringBuilder result = new StringBuilder();
+        if (commentedTree.hasHeaderComment()) {
+            String headerComment = commentedTree.getHeaderComment();
+            // Split header by newlines and prefix each line with #
+            String[] headerLines = headerComment.split("\n");
+            for (String line : headerLines) {
+                result.append("# ").append(line.trim()).append("\n");
+            }
+            result.append("\n"); // Add line break before content
+        }
+
+        // Post-process YAML to add field comments
+        String contentWithFieldComments = addCommentsToYaml(yamlContent, commentedTree.getFieldComments());
+        result.append(contentWithFieldComments);
+
+        return result.toString();
     }
 
     private String addCommentsToYaml(String yamlContent, Map<String, String> fieldComments) {
         String[] lines = yamlContent.split("\n");
         StringBuilder result = new StringBuilder();
-        
+
         for (String line : lines) {
             String trimmed = line.trim();
             // Look for field declarations (key:value or key: value)
@@ -60,7 +75,7 @@ public class YamlSerializer implements Serializer {
             }
             result.append(line).append("\n");
         }
-        
+
         return result.toString();
     }
 

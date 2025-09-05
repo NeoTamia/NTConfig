@@ -10,15 +10,20 @@ import java.util.Map;
 public class CommentedTree {
     private final Object data;
     private final Map<String, String> fieldComments;
+    private String headerComment;
 
     public CommentedTree(Object data) {
-        this.data = data;
-        this.fieldComments = new LinkedHashMap<>();
+        this(data, new LinkedHashMap<>(), null);
     }
 
     public CommentedTree(Object data, Map<String, String> fieldComments) {
+        this(data, fieldComments, null);
+    }
+
+    public CommentedTree(Object data, Map<String, String> fieldComments, String headerComment) {
         this.data = data;
         this.fieldComments = new LinkedHashMap<>(fieldComments);
+        this.headerComment = headerComment;
     }
 
     public Object getData() {
@@ -39,7 +44,20 @@ public class CommentedTree {
         return fieldComments.get(fieldName);
     }
 
+    public String getHeaderComment() {
+        return headerComment;
+    }
+
+    public void setHeaderComment(String headerComment) {
+        this.headerComment = (headerComment != null && !headerComment.trim().isEmpty()) ? 
+            headerComment.trim() : null;
+    }
+
+    public boolean hasHeaderComment() {
+        return headerComment != null && !headerComment.trim().isEmpty();
+    }
+
     public boolean hasComments() {
-        return !fieldComments.isEmpty();
+        return !fieldComments.isEmpty() || hasHeaderComment();
     }
 }

@@ -29,19 +29,34 @@ public class TomlSerializer implements Serializer {
     @Override
     public String fromCommentedTree(CommentedTree commentedTree) throws JsonProcessingException {
         String tomlContent = mapper.writeValueAsString(commentedTree.getData());
-        
+
         if (!commentedTree.hasComments()) {
             return tomlContent;
         }
-        
-        // Post-process TOML to add comments
-        return addCommentsToToml(tomlContent, commentedTree.getFieldComments());
+
+        // Add header comment if present
+        StringBuilder result = new StringBuilder();
+        if (commentedTree.hasHeaderComment()) {
+            String headerComment = commentedTree.getHeaderComment();
+            // Split header by newlines and prefix each line with #
+            String[] headerLines = headerComment.split("\n");
+            for (String line : headerLines) {
+                result.append("# ").append(line.trim()).append("\n");
+            }
+            result.append("\n"); // Add line break before content
+        }
+
+        // Post-process TOML to add field comments
+        String contentWithFieldComments = addCommentsToToml(tomlContent, commentedTree.getFieldComments());
+        result.append(contentWithFieldComments);
+
+        return result.toString();
     }
 
     private String addCommentsToToml(String tomlContent, Map<String, String> fieldComments) {
         String[] lines = tomlContent.split("\n");
         StringBuilder result = new StringBuilder();
-        
+
         for (String line : lines) {
             String trimmed = line.trim();
             // Look for field declarations (key = value)
@@ -55,7 +70,7 @@ public class TomlSerializer implements Serializer {
             }
             result.append(line).append("\n");
         }
-        
+
         return result.toString();
     }
 
