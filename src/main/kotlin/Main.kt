@@ -6,6 +6,7 @@ import re.neotamia.config.annotation.ConfigHeader
 import re.neotamia.config.annotation.ConfigProperty
 import re.neotamia.config.annotation.ConfigVersion
 import re.neotamia.config.json.JsonSerializer
+import re.neotamia.config.migration.MergeStrategy
 import re.neotamia.config.naming.NamingStrategy
 import re.neotamia.config.toml.TomlSerializer
 import re.neotamia.config.yaml.YamlSerializer
@@ -166,6 +167,6 @@ fun main() {
 //    ntConfig.save(Path.of("config.json"), config)
 //    ntConfig.save(Path.of("config.toml"), config)
 
-    val result = ntConfig.loadWithMigration(Path.of("config.yaml"), Config::class.java, config)
+    val result = ntConfig.loadWithMigration(Path.of("config.yaml"), Config::class.java, config, MergeStrategy.MERGE_MISSING_ONLY)
     println(result)
 }

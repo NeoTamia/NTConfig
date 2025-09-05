@@ -2,7 +2,6 @@ package re.neotamia.config;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import re.neotamia.config.adapter.AdapterContext;
 import re.neotamia.config.adapter.TypeAdapter;
 import re.neotamia.config.annotation.*;
 import re.neotamia.config.migration.ConfigMigrationManager;
@@ -37,10 +36,10 @@ public class NTConfig {
         try {
             String out;
             if (serializer.supportsComments()) {
-                CommentedTree commentedTree = toCommentedTree(config, AdapterContext.root());
+                CommentedTree commentedTree = toCommentedTree(config);
                 out = serializer.fromCommentedTree(commentedTree);
             } else {
-                Object tree = toTree(config, AdapterContext.root());
+                Object tree = toTree(config);
                 out = serializer.fromTree(tree);
             }
             Files.writeString(path, out);
@@ -55,11 +54,10 @@ public class NTConfig {
         try {
             String data = Files.readString(path);
             Object root = serializer.toTree(data);
-            AdapterContext ctx = AdapterContext.root();
             TypeAdapter<T> adapter = typeAdapterRegistry.get(clazz);
             if (adapter != null)
-                return adapter.deserialize(root, clazz, ctx);
-            return fromTree(root, clazz, null, ctx);
+                return adapter.deserialize(root, clazz);
+            return fromTree(root, clazz, null);
         } catch (IOException e) {
             throw new RuntimeException("Failed to read config from " + path, e);
         } catch (Exception e) {
@@ -232,14 +230,14 @@ public class NTConfig {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> T fromTree(@Nullable Object node, @NotNull Class<T> type, @Nullable Field field, @NotNull AdapterContext ctx) throws Exception {
+    private <T> T fromTree(@Nullable Object node, @NotNull Class<T> type, @Nullable Field field) throws Exception {
         if (node == null) return null;
         TypeAdapter<T> adapter = typeAdapterRegistry.get(type);
         if (adapter != null)
-            return adapter.deserialize(node, type, ctx);
+            return adapter.deserialize(node, type);
         if (isPrimitiveLike(type) || type.isEnum()) return castScalar(node, type);
 
-        Object fieldName = field != null ? field.getName() : ctx.path();
+        Object fieldName = field != null ? field.getName() : "unknown";
         if (List.class.isAssignableFrom(type)) {
             if (!(node instanceof List<?> inList)) throw new IllegalArgumentException("Expected list for field " + fieldName);
 
@@ -252,12 +250,9 @@ public class NTConfig {
                 }
             }
             List<Object> out = new ArrayList<>(inList.size());
-            int idx = 0;
             for (Object item : inList) {
-                AdapterContext childCtx = ctx.child(String.valueOf(idx), null);
-                Object mapped = (elemType == Object.class) ? item : fromTree(item, (Class<Object>) elemType, null, childCtx);
+                Object mapped = (elemType == Object.class) ? item : fromTree(item, (Class<Object>) elemType, null);
                 out.add(mapped);
-                idx++;
             }
             return (T) out;
         }
@@ -280,8 +275,7 @@ public class NTConfig {
             Map<String, Object> out = new LinkedHashMap<>();
             for (Map.Entry<?, ?> e : inMap.entrySet()) {
                 String key = String.valueOf(e.getKey());
-                AdapterContext childCtx = ctx.child(key, null);
-                Object mapped = (valType == Object.class) ? e.getValue() : fromTree(e.getValue(), (Class<Object>) valType, null, childCtx);
+                Object mapped = (valType == Object.class) ? e.getValue() : fromTree(e.getValue(), (Class<Object>) valType, null);
                 out.put(key, mapped);
             }
             return (T) out;
@@ -298,34 +292,32 @@ public class NTConfig {
             String key = resolveFieldName(f);
             Object child = map.get(key);
             if (child == null) continue;
-            AdapterContext childCtx = ctx.child(key, f);
-            Object value = fromTree(child, (Class<Object>) f.getType(), f, childCtx);
+            Object value = fromTree(child, (Class<Object>) f.getType(), f);
             f.set(instance, value);
         }
         return instance;
     }
 
     @SuppressWarnings("unchecked")
-    private Object toTree(@Nullable Object obj, @NotNull AdapterContext ctx) throws Exception {
+    private Object toTree(@Nullable Object obj) throws Exception {
         if (obj == null) return null;
         Class<?> type = obj.getClass();
         TypeAdapter<Object> adapter = typeAdapterRegistry.get((Class<Object>) type);
-        if (adapter != null) return adapter.serialize(obj, ctx);
+        if (adapter != null) return adapter.serialize(obj);
 
         if (isPrimitiveLike(type)) return obj;
         if (type.isEnum()) return ((Enum<?>) obj).name();
         if (obj instanceof List<?> list) {
             List<Object> out = new ArrayList<>(list.size());
-            int idx = 0;
             for (Object item : list)
-                out.add(toTree(item, ctx.child(String.valueOf(idx++), null)));
+                out.add(toTree(item));
             return out;
         }
         if (obj instanceof Map<?, ?> map) {
             Map<String, Object> out = new LinkedHashMap<>();
             for (Map.Entry<?, ?> e : map.entrySet()) {
                 String key = String.valueOf(e.getKey());
-                out.put(key, toTree(e.getValue(), ctx.child(key, null)));
+                out.put(key, toTree(e.getValue()));
             }
             return out;
         }
@@ -339,13 +331,13 @@ public class NTConfig {
             String key = resolveFieldName(f);
             Object value = f.get(obj);
             if (value == null) continue;
-            out.put(key, toTree(value, ctx.child(key, f)));
+            out.put(key, toTree(value));
         }
         return out;
     }
 
-    private @NotNull CommentedTree toCommentedTree(@Nullable Object obj, @NotNull AdapterContext ctx) throws Exception {
-        Object tree = toTree(obj, ctx);
+    private @NotNull CommentedTree toCommentedTree(@Nullable Object obj) throws Exception {
+        Object tree = toTree(obj);
         CommentedTree commentedTree = new CommentedTree(tree);
 
         if (obj != null && !isPrimitiveLike(obj.getClass()) && !obj.getClass().isEnum() && !(obj instanceof List<?>) && !(obj instanceof Map<?, ?>)) {

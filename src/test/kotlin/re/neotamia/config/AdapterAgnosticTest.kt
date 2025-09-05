@@ -10,6 +10,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.writeText
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 class AdapterAgnosticTest {
     data class ResourceLocationDummy(val namespace: String, val path: String) {
@@ -50,6 +51,7 @@ class AdapterAgnosticTest {
         val file = tmp.resolve("conf.yaml")
         file.writeText("block: minecraft:stone\n")
         val cfg = nt().load(file, MyConf::class.java)
+        assertNotNull(cfg)
         assertEquals("minecraft", cfg.block.namespace)
         assertEquals("stone", cfg.block.path)
     }
@@ -59,6 +61,7 @@ class AdapterAgnosticTest {
         val file = tmp.resolve("conf.json")
         file.writeText("""{ "block": "minecraft:stone" }""")
         val cfg = nt().load(file, MyConf::class.java)
+        assertNotNull(cfg)
         assertEquals("minecraft", cfg.block.namespace)
         assertEquals("stone", cfg.block.path)
     }
@@ -68,6 +71,7 @@ class AdapterAgnosticTest {
         val file = tmp.resolve("conf.toml")
         file.writeText("block = \"minecraft:stone\"\n")
         val cfg = nt().load(file, MyConf::class.java)
+        assertNotNull(cfg)
         assertEquals("minecraft", cfg.block.namespace)
         assertEquals("stone", cfg.block.path)
     }
