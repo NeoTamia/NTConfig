@@ -54,11 +54,10 @@ public class ConfigMigrationManager {
             }
 
             // If loaded config has no version, use default from template class
-            if (loadedVersion == null && currentVersion != null) {
+            if (loadedVersion == null) {
                 loadedVersion = VersionUtils.getDefaultVersion(currentTemplate.getClass());
-                if (loadedVersion == null) {
+                if (loadedVersion == null)
                     loadedVersion = new ConfigVersion("1"); // Fallback
-                }
                 // Set version in loaded config for consistency
                 VersionUtils.setVersion(loadedConfig, loadedVersion);
             }
@@ -78,9 +77,8 @@ public class ConfigMigrationManager {
 
             // Create backup
             Path backupPath = null;
-            if (backupManager.isEnabled()) {
+            if (backupManager.enabled())
                 backupPath = backupManager.createBackup(configPath, loadedVersion);
-            }
 
             final Path finalBackupPath = backupPath;
             callHooks(h -> h.afterBackup(configPath, finalBackupPath, finalLoadedVersion, finalCurrentVersion));

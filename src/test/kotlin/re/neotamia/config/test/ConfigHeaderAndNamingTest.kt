@@ -1,7 +1,8 @@
-package re.neotamia.config
+package re.neotamia.config.test
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import re.neotamia.config.NTConfig
 import re.neotamia.config.annotation.ConfigHeader
 import re.neotamia.config.annotation.ConfigProperty
 import re.neotamia.config.annotation.SerializedName

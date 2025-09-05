@@ -1,12 +1,12 @@
-package re.neotamia.config
+package re.neotamia.config.test
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import re.neotamia.config.NTConfig
 import re.neotamia.config.adapter.TypeAdapter
 import re.neotamia.config.json.JsonSerializer
 import re.neotamia.config.toml.TomlSerializer
 import re.neotamia.config.yaml.YamlSerializer
-import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.writeText
 import kotlin.test.assertEquals

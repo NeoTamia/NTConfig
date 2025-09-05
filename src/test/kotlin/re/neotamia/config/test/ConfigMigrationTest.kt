@@ -1,7 +1,8 @@
-package re.neotamia.config
+package re.neotamia.config.test
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import re.neotamia.config.NTConfig
 import re.neotamia.config.annotation.Comment
 import re.neotamia.config.annotation.ConfigHeader
 import re.neotamia.config.annotation.ConfigProperty
@@ -287,7 +288,7 @@ class ConfigMigrationTest {
                 configPath: Path,
                 oldVersion: re.neotamia.config.migration.ConfigVersion?,
                 newVersion: re.neotamia.config.migration.ConfigVersion?,
-                strategy: re.neotamia.config.migration.MergeStrategy?
+                strategy: MergeStrategy?
             ) {
                 events.add("beforeMigration: ${oldVersion?.version} -> ${newVersion?.version}")
             }
@@ -306,7 +307,7 @@ class ConfigMigrationTest {
                 backupPath: Path?,
                 oldVersion: re.neotamia.config.migration.ConfigVersion?,
                 newVersion: re.neotamia.config.migration.ConfigVersion?,
-                strategy: re.neotamia.config.migration.MergeStrategy?
+                strategy: MergeStrategy?
             ) {
                 events.add("afterMigration: success")
             }
