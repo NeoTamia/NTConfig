@@ -13,5 +13,20 @@ public interface Serializer {
      */
     String fromTree(Object tree) throws Exception;
 
+    /**
+     * Render a CommentedTree with field comments into raw text in this serializer's format.
+     * Default implementation ignores comments and delegates to fromTree.
+     */
+    default String fromCommentedTree(CommentedTree commentedTree) throws Exception {
+        return fromTree(commentedTree.getData());
+    }
+
+    /**
+     * Indicates whether this serializer supports comments.
+     */
+    default boolean supportsComments() {
+        return false;
+    }
+
     Set<String> getSupportedExtensions();
 }

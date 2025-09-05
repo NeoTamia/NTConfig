@@ -2,6 +2,7 @@ package re.neotamia.config;
 
 import re.neotamia.config.adapter.AdapterContext;
 import re.neotamia.config.adapter.TypeAdapter;
+import re.neotamia.config.annotation.Comment;
 import re.neotamia.config.annotation.ConfigProperty;
 import re.neotamia.config.annotation.Exclude;
 import re.neotamia.config.annotation.SerializedName;
@@ -28,8 +29,14 @@ public class NTConfig {
         var serializer = serializerRegistry.getByExtension(path);
         if (serializer == null) throw new IllegalArgumentException("No serializer found for " + path);
         try {
-            Object tree = toTree(config, AdapterContext.root());
-            String out = serializer.fromTree(tree);
+            String out;
+            if (serializer.supportsComments()) {
+                CommentedTree commentedTree = toCommentedTree(config, AdapterContext.root());
+                out = serializer.fromCommentedTree(commentedTree);
+            } else {
+                Object tree = toTree(config, AdapterContext.root());
+                out = serializer.fromTree(tree);
+            }
             Files.writeString(path, out);
         } catch (Exception e) {
             throw new RuntimeException("Failed to save config to " + path, e);
@@ -44,9 +51,8 @@ public class NTConfig {
             Object root = serializer.toTree(data);
             AdapterContext ctx = AdapterContext.root();
             TypeAdapter<T> adapter = typeAdapterRegistry.get(clazz);
-            if (adapter != null) {
+            if (adapter != null)
                 return adapter.deserialize(root, clazz, ctx);
-            }
             return fromTree(root, clazz, null, ctx);
         } catch (IOException e) {
             throw new RuntimeException("Failed to read config from " + path, e);
@@ -71,11 +77,8 @@ public class NTConfig {
         return serializerRegistry;
     }
 
-    // ===== Mapping helpers =====
-
     private boolean isPrimitiveLike(Class<?> type) {
-        return type.isPrimitive() || type == String.class || Number.class.isAssignableFrom(type)
-                || type == Boolean.class || type == Character.class;
+        return type.isPrimitive() || type == String.class || Number.class.isAssignableFrom(type) || type == Boolean.class || type == Character.class;
     }
 
     @SuppressWarnings("unchecked")
@@ -99,9 +102,8 @@ public class NTConfig {
     }
 
     private String resolveFieldName(Field f) {
-        if (f.isAnnotationPresent(SerializedName.class)) {
+        if (f.isAnnotationPresent(SerializedName.class))
             return f.getAnnotation(SerializedName.class).value();
-        }
         if (f.isAnnotationPresent(ConfigProperty.class)) {
             String n = f.getAnnotation(ConfigProperty.class).name();
             if (n != null && !n.isEmpty()) return n;
@@ -119,8 +121,8 @@ public class NTConfig {
 
         Object fieldName = field != null ? field.getName() : ctx.path();
         if (List.class.isAssignableFrom(type)) {
-            if (!(node instanceof List<?> inList))
-                throw new IllegalArgumentException("Expected list for field " + fieldName);
+            if (!(node instanceof List<?> inList)) throw new IllegalArgumentException("Expected list for field " + fieldName);
+
             // Determine element type
             Class<?> elemType = Object.class;
             if (field != null) {
@@ -141,8 +143,8 @@ public class NTConfig {
             return (T) out;
         }
         if (Map.class.isAssignableFrom(type)) {
-            if (!(node instanceof Map<?, ?> inMap))
-                throw new IllegalArgumentException("Expected map for field " + fieldName);
+            if (!(node instanceof Map<?, ?> inMap)) throw new IllegalArgumentException("Expected map for field " + fieldName);
+
             Class<?> keyType = String.class;
             Class<?> valType = Object.class;
             if (field != null) {
@@ -154,11 +156,10 @@ public class NTConfig {
                     if (v instanceof Class<?> vc) valType = vc;
                 }
             }
-            if (keyType != String.class) {
-                throw new IllegalArgumentException("Only String keys are supported in maps for now");
-            }
+            if (keyType != String.class) throw new IllegalArgumentException("Only String keys are supported in maps for now");
+
             Map<String, Object> out = new LinkedHashMap<>();
-            for (Map.Entry<?, ?> e : ((Map<?, ?>) inMap).entrySet()) {
+            for (Map.Entry<?, ?> e : inMap.entrySet()) {
                 String key = String.valueOf(e.getKey());
                 AdapterContext childCtx = ctx.child(key, null);
                 Object mapped = (valType == Object.class) ? e.getValue() : fromTree(e.getValue(), (Class<Object>) valType, null, childCtx);
@@ -167,16 +168,17 @@ public class NTConfig {
             return (T) out;
         }
         // POJO
-        if (!(node instanceof Map<?, ?> map)) {
+        if (!(node instanceof Map<?, ?> map))
             throw new IllegalArgumentException("Expected object for type " + type.getName());
-        }
+
         T instance = type.getDeclaredConstructor().newInstance();
         for (Field f : type.getDeclaredFields()) {
             if (Modifier.isStatic(f.getModifiers())) continue;
             if (f.isAnnotationPresent(Exclude.class)) continue;
+            if (f.isAnnotationPresent(ConfigProperty.class) && f.getAnnotation(ConfigProperty.class).exclude()) continue;
             f.setAccessible(true);
             String key = resolveFieldName(f);
-            Object child = ((Map<?, ?>) map).get(key);
+            Object child = map.get(key);
             if (child == null) continue;
             AdapterContext childCtx = ctx.child(key, f);
             Object value = fromTree(child, (Class<Object>) f.getType(), f, childCtx);
@@ -215,6 +217,7 @@ public class NTConfig {
         for (Field f : type.getDeclaredFields()) {
             if (Modifier.isStatic(f.getModifiers())) continue;
             if (f.isAnnotationPresent(Exclude.class)) continue;
+            if (f.isAnnotationPresent(ConfigProperty.class) && f.getAnnotation(ConfigProperty.class).exclude()) continue;
             f.setAccessible(true);
             String key = resolveFieldName(f);
             Object value = f.get(obj);
@@ -222,5 +225,45 @@ public class NTConfig {
             out.put(key, toTree(value, ctx.child(key, f)));
         }
         return out;
+    }
+
+    private CommentedTree toCommentedTree(Object obj, AdapterContext ctx) throws Exception {
+        Object tree = toTree(obj, ctx);
+        CommentedTree commentedTree = new CommentedTree(tree);
+        
+        if (obj != null && !isPrimitiveLike(obj.getClass()) && !obj.getClass().isEnum() && 
+            !(obj instanceof List<?>) && !(obj instanceof Map<?, ?>)) {
+            // POJO - collect field comments
+            collectFieldComments(obj.getClass(), commentedTree);
+        }
+        
+        return commentedTree;
+    }
+
+    private void collectFieldComments(Class<?> type, CommentedTree commentedTree) {
+        for (Field f : type.getDeclaredFields()) {
+            if (Modifier.isStatic(f.getModifiers())) continue;
+            if (f.isAnnotationPresent(Exclude.class)) continue;
+            if (f.isAnnotationPresent(ConfigProperty.class) && f.getAnnotation(ConfigProperty.class).exclude()) continue;
+            
+            String fieldName = resolveFieldName(f);
+            String comment = null;
+            
+            // Check @Comment annotation
+            if (f.isAnnotationPresent(Comment.class)) {
+                comment = f.getAnnotation(Comment.class).value();
+            }
+            // Check @ConfigProperty description (value())
+            else if (f.isAnnotationPresent(ConfigProperty.class)) {
+                String desc = f.getAnnotation(ConfigProperty.class).value();
+                if (desc != null && !desc.trim().isEmpty()) {
+                    comment = desc;
+                }
+            }
+            
+            if (comment != null) {
+                commentedTree.addFieldComment(fieldName, comment);
+            }
+        }
     }
 }
