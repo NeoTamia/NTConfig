@@ -1,0 +1,37 @@
+# Version catalog is a central place for you to declare and version dependencies
+# https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
+# https://docs.gradle.org/current/userguide/platforms.html#sub::toml-dependencies-format
+
+[versions]
+kotlin = "2.2.0"
+kotlinxSerializationCore = "1.9.0"
+kaml = "0.78.0"
+ktoml = "0.7.1"
+gson = "2.13.1"
+toml4j = "0.7.2"
+snakeyaml = "2.10"
+jacksonDataformat = "2.18.1"
+
+[libraries]
+kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+kotlinxSerialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinxSerializationCore" }
+kotlinxSerializationJson = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationCore" }
+kaml = { module = "com.charleskorn.kaml:kaml", version.ref = "kaml" }
+ktoml = { module = "com.akuleshov7:ktoml-core", version.ref = "ktoml" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+toml4j = { module = "com.moandjiezana.toml:toml4j", version.ref = "toml4j" }
+jacksonDataformatToml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-toml", version.ref = "jacksonDataformat" }
+jacksonDataformatYaml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", version.ref = "jacksonDataformat" }
+snakeyaml = { module = "org.snakeyaml:snakeyaml-engine", version.ref = "snakeyaml" }
+
+# Libraries can be bundled together for easier import
+[bundles]
+kotlinxEcosystem = ["kotlinxSerialization"]
+jsonModule = ["gson", "kotlinxSerializationJson"]
+yamlModule = ["snakeyaml", "kaml", "jacksonDataformatYaml"]
+tomlModule = ["ktoml", "toml4j", "jacksonDataformatToml"]
+
+[plugins]
+kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+shadow = { id = "com.github.johnrengelman.shadow", version = "8.1.1" }

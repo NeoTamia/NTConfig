@@ -3,9 +3,9 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 import java.net.URI
 
 plugins {
-    kotlin("jvm") version "2.1.20"
-    id("com.github.johnrengelman.shadow") version "8.1.1"
-    kotlin("plugin.serialization") version "2.1.20"
+    alias(libs.plugins.kotlin)
+    alias(libs.plugins.shadow)
+    alias(libs.plugins.kotlinSerialization)
     id("maven-publish")
 }
 
