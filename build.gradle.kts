@@ -5,7 +5,6 @@ import java.net.URI
 plugins {
     alias(libs.plugins.kotlin)
     alias(libs.plugins.shadow)
-    alias(libs.plugins.kotlinSerialization)
     id("maven-publish")
 }
 
@@ -18,7 +17,6 @@ allprojects {
     apply(plugin = "kotlin")
     apply(plugin = "maven-publish")
     apply(plugin = "com.github.johnrengelman.shadow")
-    apply(plugin = "org.jetbrains.kotlin.plugin.serialization")
 
     group = "re.neotamia.config"
     version = rootProject.version
@@ -69,7 +67,7 @@ dependencies {
     api(projects.modules.ntConfigToml)
     api(projects.modules.ntConfigYaml)
 
-    compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-core:1.9.0")
+    implementation(libs.bundles.nightConfigModule)
 }
 
 tasks.withType<KotlinJvmCompile>().configureEach {

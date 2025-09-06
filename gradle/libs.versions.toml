@@ -8,6 +8,7 @@ gson = "2.13.1"
 toml4j = "0.7.2"
 snakeyaml = "2.10"
 jacksonDataformat = "2.18.1"
+nightConfig = "3.8.3"
 
 [libraries]
 kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
@@ -16,14 +17,19 @@ toml4j = { module = "com.moandjiezana.toml:toml4j", version.ref = "toml4j" }
 jacksonDataformatToml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-toml", version.ref = "jacksonDataformat" }
 jacksonDataformatYaml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", version.ref = "jacksonDataformat" }
 snakeyaml = { module = "org.snakeyaml:snakeyaml-engine", version.ref = "snakeyaml" }
+nightConfigCore = { module = "com.electronwill.night-config:core", version.ref = "nightConfig" }
+nightConfigToml = { module = "com.electronwill.night-config:toml", version.ref = "nightConfig" }
+nightConfigYaml = { module = "com.electronwill.night-config:yaml", version.ref = "nightConfig" }
+nightConfigJson = { module = "com.electronwill.night-config:json", version.ref = "nightConfig" }
+nightConfigHocon = { module = "com.electronwill.night-config:hocon", version.ref = "nightConfig" }
 
 # Libraries can be bundled together for easier import
 [bundles]
 jsonModule = ["gson"]
 yamlModule = ["snakeyaml", "jacksonDataformatYaml"]
 tomlModule = ["toml4j", "jacksonDataformatToml"]
+nightConfigModule = ["nightConfigCore", "nightConfigToml", "nightConfigYaml", "nightConfigJson", "nightConfigHocon"]
 
 [plugins]
-kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 shadow = { id = "com.github.johnrengelman.shadow", version = "8.1.1" }
