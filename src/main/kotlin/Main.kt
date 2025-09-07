@@ -1,16 +1,15 @@
 package re.neotamia.config.main;
 
-import re.neotamia.config.NTConfig
+import dev.dejvokep.boostedyaml.YamlDocument
+import dev.dejvokep.boostedyaml.libs.org.snakeyaml.engine.v2.common.ScalarStyle
+import dev.dejvokep.boostedyaml.settings.dumper.DumperSettings
+import dev.dejvokep.boostedyaml.settings.loader.LoaderSettings
 import re.neotamia.config.adapter.TypeAdapter
 import re.neotamia.config.annotation.ConfigHeader
 import re.neotamia.config.annotation.ConfigProperty
 import re.neotamia.config.annotation.ConfigVersion
-import re.neotamia.config.json.JsonSerializer
-import re.neotamia.config.migration.MergeStrategy
-import re.neotamia.config.naming.NamingStrategy
-import re.neotamia.config.toml.TomlSerializer
-import re.neotamia.config.yaml.YamlSerializer
-import java.nio.file.Path
+import java.io.File
+
 
 enum class Test {
     UWU,
@@ -41,7 +40,7 @@ class Config(
         It preserves line breaks.
     """.trimIndent(),
     val test: Test = Test.OWO,
-    val resource: ResourceLocation = ResourceLocation("example:resource_path"),
+//    val resource: ResourceLocation = ResourceLocation("example:resource_path"),
     val uneVariableOuLeNomPeutEtreTresLong: Boolean = true,
     val toto: Int = 42,
     val titi: Int = 24
@@ -153,20 +152,42 @@ class ResourceLocationTypeAdapter : TypeAdapter<ResourceLocation> {
     }
 }
 
+//fun main() {
+//    val config = Config()
+//
+//    val ntConfig = NTConfig()
+//    ntConfig.namingStrategy = NamingStrategy.KEBAB_CASE
+//    ntConfig.registerSerializer(YamlSerializer())
+//    ntConfig.registerSerializer(JsonSerializer())
+//    ntConfig.registerSerializer(TomlSerializer())
+//    ntConfig.typeAdapterRegistry.register(ResourceLocation::class.java, ResourceLocationTypeAdapter())
+//
+////    ntConfig.save(Path.of("config.yaml"), config)
+////    ntConfig.save(Path.of("config.json"), config)
+////    ntConfig.save(Path.of("config.toml"), config)
+//
+//    val result = ntConfig.loadWithMigration(Path.of("config.yaml"), Config::class.java, config, MergeStrategy.MERGE_MISSING_ONLY)
+//    println(result)
+//}
+
+//fun main() {
+//    val config = CommentedFileConfig.of(Path.of("config-night.toml"))
+//    ObjectSerializer.standard().serializeFields(Config(), config)
+//    println(config)
+//
+//    config.save()
+//}
+
 fun main() {
-    val config = Config()
-
-    val ntConfig = NTConfig()
-    ntConfig.namingStrategy = NamingStrategy.KEBAB_CASE
-    ntConfig.registerSerializer(YamlSerializer())
-    ntConfig.registerSerializer(JsonSerializer())
-    ntConfig.registerSerializer(TomlSerializer())
-    ntConfig.typeAdapterRegistry.register(ResourceLocation::class.java, ResourceLocationTypeAdapter())
-
-//    ntConfig.save(Path.of("config.yaml"), config)
-//    ntConfig.save(Path.of("config.json"), config)
-//    ntConfig.save(Path.of("config.toml"), config)
-
-    val result = ntConfig.loadWithMigration(Path.of("config.yaml"), Config::class.java, config, MergeStrategy.MERGE_MISSING_ONLY)
-    println(result)
+    val document = YamlDocument.create(
+        File("config.yaml"),
+        DumperSettings.builder()
+            .setIndentation(2)
+            .setIndicatorIndentation(2)
+            .setMultilineStyle(true)
+            .build(),
+        LoaderSettings.builder().setCreateFileIfAbsent(true).setDetailedErrors(true).build()
+    )
+    document.reload()
+//    document.save()
 }
