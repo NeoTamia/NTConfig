@@ -28,6 +28,10 @@ allprojects {
             name = "jitpack"
             url = uri("https://jitpack.io")
         }
+        maven {
+            name = "neotamiaSnapshots"
+            url = uri("https://repo.neotamia.re/snapshots")
+        }
     }
 
     dependencies {
