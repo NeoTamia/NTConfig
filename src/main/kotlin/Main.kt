@@ -56,7 +56,7 @@ class Config(
     val enabled: Boolean = true,
     @ConfigProperty(exclude = true)
     // TODO: add support for floats
-    val decimals: Double = 0.5,
+    val decimals: Float = 0.5f,
     val double: Double = 0.123456789,
     val items: List<String> = listOf("item1", "item2", "item3"),
     val settings: Map<String, String> = mapOf("key1" to "value1", "key2" to "value2"),
@@ -166,18 +166,7 @@ class InnerNestedConfig {
     }
 }
 
-class ResourceLocationTypeAdapter : TypeAdapter<ResourceLocation>, ValueSerializer<ResourceLocation, String>, ValueDeserializer<String, ResourceLocation> {
-    override fun serialize(obj: ResourceLocation): Any {
-        return "${obj.namespace}:${obj.path}"
-    }
-
-    override fun deserialize(data: Any, clazz: Class<ResourceLocation>): ResourceLocation {
-        if (data is String) {
-            return ResourceLocation(data.substringBefore(":"), data.substringAfter(":"))
-        }
-        throw IllegalArgumentException("Cannot deserialize $data to ResourceLocation")
-    }
-
+class ResourceLocationTypeAdapter : TypeAdapter<ResourceLocation, String> {
     override fun serialize(value: ResourceLocation, ctx: SerializerContext): String {
         return "${value.namespace}:${value.path}"
     }
@@ -211,19 +200,20 @@ fun main() {
     FormatDetector.registerExtension("yml", YamlFormat.defaultInstance())
     FormatDetector.registerExtension("json", JsonFormat.fancyInstance())
     val config = CommentedFileConfig.builder(Path.of("config-night.toml")).sync().build()
-    val objectSerializer = ObjectSerializer.builder().withSerializerForClass(ResourceLocation::class.java, ResourceLocationTypeAdapter()).build()
-    objectSerializer.serializeFields(Config(), config)
-    println(config)
-
-    config.save()
+//    val objectSerializer = ObjectSerializer.builder().withSerializerForClass(ResourceLocation::class.java, ResourceLocationTypeAdapter()).build()
+//    objectSerializer.serializeFields(Config(), config)
+//    println(config)
+//
+//    config.save()
     config.load()
 
     val deserializer = ObjectDeserializer.builder().withDeserializerForClass(String::class.java, ResourceLocation::class.java, ResourceLocationTypeAdapter()).build()
     val deserializedConfig = Config()
     deserializedConfig.resource.namespace = "9999999999999999"
     deserializer.deserializeFields(config, deserializedConfig)
-
     println(deserializedConfig.resource)
+
+    println(config.getOptionalString("decimals").get())
 }
 
 //fun main() {

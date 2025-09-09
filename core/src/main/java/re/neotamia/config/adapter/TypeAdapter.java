@@ -1,8 +1,12 @@
 package re.neotamia.config.adapter;
 
-import org.jetbrains.annotations.NotNull;
+import re.neotamia.nightconfig.core.serde.ValueDeserializer;
+import re.neotamia.nightconfig.core.serde.ValueSerializer;
 
-public interface TypeAdapter<T> {
-    @NotNull Object serialize(@NotNull T obj);
-    @NotNull T deserialize(@NotNull Object data, @NotNull Class<T> clazz);
-}
+/**
+ * Combines a {@link ValueSerializer} and a {@link ValueDeserializer} to a single type adapter.
+ *
+ * @param <T> type of the object to serialize/deserialize
+ * @param <R> type of the serialized form
+ */
+public interface TypeAdapter<T, R> extends ValueSerializer<T, R>, ValueDeserializer<R, T> {}

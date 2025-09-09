@@ -54,9 +54,9 @@ public class NTConfig {
         try {
             String data = Files.readString(path);
             Object root = serializer.toTree(data);
-            TypeAdapter<T> adapter = typeAdapterRegistry.get(clazz);
-            if (adapter != null)
-                return adapter.deserialize(root, clazz);
+//            TypeAdapter<T, ?> adapter = typeAdapterRegistry.get(clazz);
+//            if (adapter != null)
+//                return adapter.deserialize(root, clazz);
             return fromTree(root, clazz, null);
         } catch (IOException e) {
             throw new RuntimeException("Failed to read config from " + path, e);
@@ -65,7 +65,7 @@ public class NTConfig {
         }
     }
 
-    public <T> void registerTypeAdapter(Class<T> clazz, TypeAdapter<T> adapter) {
+    public <T, R> void registerTypeAdapter(Class<T> clazz, TypeAdapter<T, R> adapter) {
         typeAdapterRegistry.register(clazz, adapter);
     }
 
@@ -232,9 +232,9 @@ public class NTConfig {
     @SuppressWarnings("unchecked")
     private <T> T fromTree(@Nullable Object node, @NotNull Class<T> type, @Nullable Field field) throws Exception {
         if (node == null) return null;
-        TypeAdapter<T> adapter = typeAdapterRegistry.get(type);
-        if (adapter != null)
-            return adapter.deserialize(node, type);
+//        TypeAdapter<T> adapter = typeAdapterRegistry.get(type);
+//        if (adapter != null)
+//            return adapter.deserialize(node, type);
         if (isPrimitiveLike(type) || type.isEnum()) return castScalar(node, type);
 
         Object fieldName = field != null ? field.getName() : "unknown";
@@ -302,8 +302,8 @@ public class NTConfig {
     private Object toTree(@Nullable Object obj) throws Exception {
         if (obj == null) return null;
         Class<?> type = obj.getClass();
-        TypeAdapter<Object> adapter = typeAdapterRegistry.get((Class<Object>) type);
-        if (adapter != null) return adapter.serialize(obj);
+//        TypeAdapter<Object> adapter = typeAdapterRegistry.get((Class<Object>) type);
+//        if (adapter != null) return adapter.serialize(obj);
 
         if (isPrimitiveLike(type)) return obj;
         if (type.isEnum()) return ((Enum<?>) obj).name();
