@@ -2,8 +2,6 @@ package re.neotamia.config.migration;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import re.neotamia.config.annotation.ConfigProperty;
-import re.neotamia.config.annotation.Exclude;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -148,12 +146,6 @@ public class ConfigMerger {
     }
 
     private boolean shouldExcludeField(@NotNull Field field) {
-        if (field.isAnnotationPresent(Exclude.class)) {
-            return true;
-        }
-        if (field.isAnnotationPresent(ConfigProperty.class)) {
-            return field.getAnnotation(ConfigProperty.class).exclude();
-        }
         return false;
     }
 

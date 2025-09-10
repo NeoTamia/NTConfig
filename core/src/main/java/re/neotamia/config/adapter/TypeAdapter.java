@@ -1,5 +1,6 @@
 package re.neotamia.config.adapter;
 
+import org.jetbrains.annotations.NotNull;
 import re.neotamia.nightconfig.core.serde.ValueDeserializer;
 import re.neotamia.nightconfig.core.serde.ValueSerializer;
 
@@ -9,4 +10,7 @@ import re.neotamia.nightconfig.core.serde.ValueSerializer;
  * @param <T> type of the object to serialize/deserialize
  * @param <R> type of the serialized form
  */
-public interface TypeAdapter<T, R> extends ValueSerializer<T, R>, ValueDeserializer<R, T> {}
+public interface TypeAdapter<T, R> extends ValueSerializer<T, R>, ValueDeserializer<R, T> {
+    @NotNull Class<@NotNull T> valueClass();
+    @NotNull Class<@NotNull R> resultClass();
+}
