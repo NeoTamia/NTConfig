@@ -4,25 +4,23 @@
 
 [versions]
 kotlin = "2.2.0"
+shadowPlugin = "8.1.1"
 nightConfig = "3.9.8"
-boostedYaml = "1.3.7"
 
 [libraries]
-kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 nightConfigCore = { module = "re.neotamia.night-config:core", version.ref = "nightConfig" }
 nightConfigToml = { module = "re.neotamia.night-config:toml", version.ref = "nightConfig" }
 nightConfigYaml = { module = "re.neotamia.night-config:yaml", version.ref = "nightConfig" }
 nightConfigJson = { module = "re.neotamia.night-config:json", version.ref = "nightConfig" }
 nightConfigHocon = { module = "re.neotamia.night-config:hocon", version.ref = "nightConfig" }
-boostedYaml = { module = "dev.dejvokep:boosted-yaml", version.ref = "boostedYaml" }
 
 # Libraries can be bundled together for easier import
 [bundles]
 jsonModule = ["nightConfigJson"]
-yamlModule = ["nightConfigYaml", "boostedYaml"]
+yamlModule = ["nightConfigYaml"]
 tomlModule = ["nightConfigToml"]
 nightConfigModule = ["nightConfigCore", "nightConfigToml", "nightConfigYaml", "nightConfigJson", "nightConfigHocon"]
 
 [plugins]
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-shadow = { id = "com.github.johnrengelman.shadow", version = "8.1.1" }
+shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadowPlugin" }
