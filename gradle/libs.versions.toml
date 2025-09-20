@@ -3,7 +3,7 @@
 # https://docs.gradle.org/current/userguide/platforms.html#sub::toml-dependencies-format
 
 [versions]
-kotlin = "2.2.0"
+kotlin = "2.2.20"
 shadowPlugin = "8.1.1"
 nightConfig = "3.9.8"
 
