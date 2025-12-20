@@ -11,6 +11,6 @@ import re.neotamia.nightconfig.core.serde.ValueSerializer;
  * @param <R> type of the serialized form
  */
 public interface TypeAdapter<T, R> extends ValueSerializer<T, R>, ValueDeserializer<R, T> {
-    @NotNull Class<@NotNull T> valueClass();
-    @NotNull Class<@NotNull R> resultClass();
+    @NotNull Class<T> valueClass();
+    @NotNull Class<R> resultClass();
 }

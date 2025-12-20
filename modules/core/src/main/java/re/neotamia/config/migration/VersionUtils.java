@@ -51,7 +51,7 @@ public class VersionUtils {
      * @param version the version to set
      * @throws RuntimeException if version setting fails
      */
-    public static void setVersion(@Nullable Object config, re.neotamia.config.migration.@Nullable ConfigVersion version) {
+    public static void setVersion(@Nullable Object config, @Nullable re.neotamia.config.migration.ConfigVersion version) {
         if (config == null || version == null) return;
 
         Class<?> clazz = config.getClass();
@@ -99,7 +99,7 @@ public class VersionUtils {
      * @param clazz the configuration class
      * @return the default version, or null if no version field exists
      */
-    public static re.neotamia.config.migration.@Nullable ConfigVersion getDefaultVersion(@NotNull Class<?> clazz) {
+    public static @Nullable re.neotamia.config.migration.ConfigVersion getDefaultVersion(@NotNull Class<?> clazz) {
         Field versionField = findVersionField(clazz);
         if (versionField == null) return null;
 
@@ -107,7 +107,7 @@ public class VersionUtils {
         return new re.neotamia.config.migration.ConfigVersion(annotation.defaultVersion());
     }
 
-    private static re.neotamia.config.migration.@NotNull ConfigVersion convertToConfigVersion(@NotNull Object value) {
+    private static @NotNull re.neotamia.config.migration.ConfigVersion convertToConfigVersion(@NotNull Object value) {
         return switch (value) {
             case String s -> new re.neotamia.config.migration.ConfigVersion(s);
             case Integer i -> new re.neotamia.config.migration.ConfigVersion(i);
@@ -116,7 +116,7 @@ public class VersionUtils {
         };
     }
 
-    private static Object convertFromConfigVersion(re.neotamia.config.migration.@NotNull ConfigVersion version, @NotNull Class<?> fieldType) {
+    private static Object convertFromConfigVersion(@NotNull re.neotamia.config.migration.ConfigVersion version, @NotNull Class<?> fieldType) {
         if (fieldType == String.class)
             return version.getVersion();
         if (fieldType == int.class || fieldType == Integer.class)

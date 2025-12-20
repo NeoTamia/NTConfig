@@ -188,7 +188,7 @@ public class NTConfig {
      * @param <T>             the configuration type
      * @return the migration result containing the loaded/migrated configuration
      */
-    public <T> ConfigMigrationManager.@NotNull MigrationResult<T> loadWithMigration(@NotNull Path path, @NotNull Class<T> clazz, @NotNull T currentTemplate, MergeStrategy strategy) {
+    public <T> ConfigMigrationManager.MigrationResult<T> loadWithMigration(@NotNull Path path, @NotNull Class<T> clazz, @NotNull T currentTemplate, MergeStrategy strategy) {
         ensureMigrationManager();
 
         // Load the existing configuration
@@ -221,7 +221,7 @@ public class NTConfig {
      * Loads and updates a configuration, always saving the result.
      * This is useful for ensuring configuration files are up to date with current templates.
      */
-    public <T> ConfigMigrationManager.@NotNull MigrationResult<T> loadAndUpdate(@NotNull Path path, @NotNull Class<T> clazz, @NotNull T currentTemplate, MergeStrategy strategy) {
+    public <T> ConfigMigrationManager.MigrationResult<T> loadAndUpdate(@NotNull Path path, @NotNull Class<T> clazz, @NotNull T currentTemplate, MergeStrategy strategy) {
         ConfigMigrationManager.MigrationResult<T> result = loadWithMigration(path, clazz, currentTemplate, strategy);
         // Always save to ensure a file is up to date (comments, formatting, etc.)
         save(path, result.config());
