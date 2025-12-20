@@ -4,10 +4,13 @@
 
 [versions]
 kotlin = "2.3.0"
-shadowPlugin = "8.1.1"
+shadow = "9.3.0"
 nightConfig = "3.9.8"
 
 [libraries]
+kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+shadowGradlePlugin = { module = "com.gradleup.shadow:shadow-gradle-plugin", version.ref = "shadow" }
+#
 nightConfigCore = { module = "re.neotamia.night-config:core", version.ref = "nightConfig" }
 nightConfigToml = { module = "re.neotamia.night-config:toml", version.ref = "nightConfig" }
 nightConfigYaml = { module = "re.neotamia.night-config:yaml", version.ref = "nightConfig" }
@@ -23,4 +26,4 @@ nightConfigModule = ["nightConfigCore", "nightConfigToml", "nightConfigYaml", "n
 
 [plugins]
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadowPlugin" }
+
