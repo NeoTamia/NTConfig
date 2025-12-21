@@ -15,7 +15,7 @@ import re.neotamia.nightconfig.json.JsonFormat
 import re.neotamia.nightconfig.toml.TomlFormat
 import re.neotamia.nightconfig.yaml.YamlFormat
 import java.nio.file.Path
-import java.util.*
+import java.util.Optional
 
 enum class Test {
     UWU,
