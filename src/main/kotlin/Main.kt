@@ -71,7 +71,7 @@ class ResourceLocationTypeAdapter : TypeAdapter<ResourceLocation, String> {
         return "${value.namespace}:${value.path}"
     }
 
-    override fun deserialize(value: String, resultType: Optional<TypeConstraint>, ctx: DeserializerContext): ResourceLocation {
+    override fun deserialize(value: String, resultType: TypeConstraint?, ctx: DeserializerContext): ResourceLocation {
         return ResourceLocation(value)
     }
 }
