@@ -4,6 +4,7 @@ import re.neotamia.config.NTConfig
 import re.neotamia.config.adapter.TypeAdapter
 import re.neotamia.config.annotation.ConfigHeader
 import re.neotamia.config.annotation.ConfigVersion
+import re.neotamia.nightconfig.core.file.FileConfigBuilder
 import re.neotamia.nightconfig.core.serde.DeserializerContext
 import re.neotamia.nightconfig.core.serde.NamingStrategy
 import re.neotamia.nightconfig.core.serde.SerializerContext
@@ -34,7 +35,7 @@ data class Config(
     val version: Int = 2,
     @SerdeConfig(comments = [SerdeComment("Whether the configuration is enabled")], key = "isEnabled")
     val enabled: Boolean = true,
-    @SerdeSkip(SerdeSkip.SkipIf.ALWAYS)
+//    @SerdeSkip(SerdeSkip.SkipIf.ALWAYS)
     val decimals: Float = 0.5f,
     val double: Double = 0.123456789,
     val items: List<String> = listOf("item1", "item2", "item3"),
@@ -81,27 +82,14 @@ fun main() {
     ntconfig.registerFormat(TomlFormat.instance(), "toml")
     ntconfig.registerFormat(YamlFormat.defaultInstance(), "yaml", "yml")
     ntconfig.registerFormat(JsonFormat.fancyInstance(), "json")
-    ntconfig.registerTypeAdapter( ResourceLocationTypeAdapter())
+    ntconfig.registerTypeAdapter(ResourceLocationTypeAdapter())
     ntconfig.setNamingStrategy(NamingStrategy.KEBAB_CASE)
 
     val config = Config()
     config.resource.namespace = "5555555555555555"
-    ntconfig.load(Path.of("config.yml"), config);
-    println(config)
+    val conf = ntconfig.load(Path.of("config.yml"), config);
+    println("${conf == config}, $config")
 
-//    val config = CommentedFileConfig.builder(Path.of("config.yml")).sync().build()
-//    val objectSerializer = ObjectSerializer.builder().withSerializerForClass(ResourceLocation::class.java, ResourceLocationTypeAdapter()).build()
-//    objectSerializer.serializeFields(Config(), config)
-//    println(config)
-//
-//    config.save()
-//    config.load()
-
-//    val deserializer = ObjectDeserializer.builder().build(); //.withDeserializerForClass(String::class.java, ResourceLocation::class.java, ResourceLocationTypeAdapter()).build()
-//    val deserializedConfig = Config()
-//    deserializedConfig.resource.namespace = "9999999999999999"
-//    deserializer.deserializeFields(config, deserializedConfig)
-//    println(deserializedConfig.resource)
-
-//    println(config.getOptionalString("decimals").get())
+    val fileConfig = ntconfig.save(Path.of("config.yml"), config);
+    println(fileConfig.getFloat("decimals"))
 }
