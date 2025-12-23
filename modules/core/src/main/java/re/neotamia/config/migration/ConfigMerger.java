@@ -24,12 +24,8 @@ public class ConfigMerger {
      */
     @SuppressWarnings("unchecked")
     public <T> T merge(@Nullable T oldConfig, @Nullable T newConfig, MergeStrategy strategy) throws Exception {
-        if (oldConfig == null) {
-            return newConfig;
-        }
-        if (newConfig == null) {
-            return oldConfig;
-        }
+        if (oldConfig == null) return newConfig;
+        if (newConfig == null) return oldConfig;
 
         Class<T> clazz = (Class<T>) oldConfig.getClass();
 
@@ -37,8 +33,6 @@ public class ConfigMerger {
             case OVERRIDE -> newConfig;
             case VERSION_ONLY -> mergeVersionOnly(oldConfig, newConfig);
             case MERGE_MISSING_ONLY -> mergeMissingOnly(oldConfig, newConfig, clazz);
-            case MERGE_WITH_UPDATES -> mergeWithUpdates(oldConfig, newConfig, clazz);
-            case CUSTOM -> throw new UnsupportedOperationException("Custom merge strategy requires a custom merger implementation");
             default -> throw new IllegalArgumentException("Unknown merge strategy: " + strategy);
         };
     }
@@ -48,9 +42,7 @@ public class ConfigMerger {
      */
     @SuppressWarnings("unchecked")
     public <T> @Nullable T copy(@Nullable T config) throws Exception {
-        if (config == null) {
-            return null;
-        }
+        if (config == null) return null;
 
         Class<T> clazz = (Class<T>) config.getClass();
         T copy = clazz.getDeclaredConstructor().newInstance();
@@ -107,33 +99,6 @@ public class ConfigMerger {
             if (oldValue == null && newValue != null) {
                 field.set(result, newValue);
             }
-        }
-
-        // Always update version
-        ConfigVersion newVersion = VersionUtils.extractVersion(newConfig);
-        if (newVersion != null) {
-            VersionUtils.setVersion(result, newVersion);
-        }
-
-        return result;
-    }
-
-    private <T> T mergeWithUpdates(T oldConfig, T newConfig, Class<T> clazz) throws Exception {
-        T result = copy(newConfig); // Start with new config as base
-
-        for (Field field : getAllFields(clazz)) {
-            if (Modifier.isStatic(field.getModifiers())) continue;
-            if (shouldExcludeField(field)) continue;
-
-            field.setAccessible(true);
-            Object oldValue = field.get(oldConfig);
-            Object newValue = field.get(newConfig);
-
-            // Keep old values for non-null fields, but allow new fields to be added
-            if (oldValue != null) {
-                field.set(result, oldValue);
-            }
-            // New fields (where oldValue is null) will keep their newValue from the base
         }
 
         // Always update version
