@@ -197,15 +197,20 @@ public class NTConfig {
             loadedConfig = load(path, clazz);
         } catch (Exception e) {
             if (!Files.exists(path)) {
-                save(path, currentTemplate);
-                return new ConfigMigrationManager.MigrationResult<>(currentTemplate, false, null, VersionUtils.extractVersion(currentTemplate), null);
+                try (var fileConfig = save(path, currentTemplate)) {
+                    // Return result indicating no migration was needed (new file created)
+                    return new ConfigMigrationManager.MigrationResult<>(currentTemplate, false, null, VersionUtils.extractVersion(currentTemplate), null);
+                }
             }
             throw e;
         }
 
         ConfigMigrationManager.MigrationResult<T> result = migrationManager.migrate(path, loadedConfig, currentTemplate, strategy);
 
-        if (result.wasMigrated()) save(path, result.config());
+        if (result.wasMigrated()) {
+            var file = save(path, result.config());
+            file.close();
+        }
 
         return result;
     }
@@ -224,7 +229,8 @@ public class NTConfig {
     public <T> ConfigMigrationManager.MigrationResult<T> loadAndUpdate(@NotNull Path path, @NotNull Class<T> clazz, @NotNull T currentTemplate, MergeStrategy strategy) {
         ConfigMigrationManager.MigrationResult<T> result = loadWithMigration(path, clazz, currentTemplate, strategy);
         // Always save to ensure a file is up to date (comments, formatting, etc.)
-        save(path, result.config());
+        var fileConfig = save(path, result.config());
+        fileConfig.close();
         return result;
     }
 
