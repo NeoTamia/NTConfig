@@ -118,17 +118,9 @@ public class ConfigMigrationManager {
         ConfigVersion loadedVersion = VersionUtils.extractVersion(loadedConfig);
         ConfigVersion currentVersion = VersionUtils.extractVersion(currentTemplate);
 
-        if (loadedVersion == null && currentVersion == null) {
-            return false;
-        }
-
-        if (loadedVersion == null && currentVersion != null) {
-            return true; // Need to add version field
-        }
-
-        if (currentVersion == null) {
-            return false; // Can't migrate without target version
-        }
+        if (loadedVersion == null && currentVersion == null) return false;
+        if (loadedVersion == null) return true; // Need to add version field
+        if (currentVersion == null) return false; // Can't migrate without target version
 
         return !loadedVersion.isEqualTo(currentVersion);
     }
