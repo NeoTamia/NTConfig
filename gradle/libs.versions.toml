@@ -5,11 +5,14 @@
 [versions]
 kotlin = "2.3.0"
 shadow = "9.3.0"
+spotless = "8.1.0"
+
 nightConfig = "3.10.1"
 
 [libraries]
 kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 shadowGradlePlugin = { module = "com.gradleup.shadow:shadow-gradle-plugin", version.ref = "shadow" }
+spotlessGradlePlugin = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
 #
 nightConfigCore = { module = "re.neotamia.night-config:core", version.ref = "nightConfig" }
 nightConfigToml = { module = "re.neotamia.night-config:toml", version.ref = "nightConfig" }

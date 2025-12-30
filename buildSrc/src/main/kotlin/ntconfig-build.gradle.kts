@@ -1,18 +1,19 @@
+import com.diffplug.spotless.LineEnding
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.internal.extensions.stdlib.capitalized
 
 plugins {
     kotlin("jvm")
+    idea
     `maven-publish`
     `java-library`
     id("com.gradleup.shadow")
+    id("com.diffplug.spotless")
 }
 
 group = "re.neotamia.config"
-// x-release-please-start-version
-version = "0.0.1"
-// x-release-please-end
+version = findProperty("version")!!
 
 repositories {
     mavenCentral()
@@ -48,6 +49,31 @@ java {
 
 kotlin {
     jvmToolchain(21)
+}
+
+spotless {
+    isEnforceCheck = findProperty("spotless.enforceCheck")?.toString()?.toBoolean() ?: true
+    lineEndings = LineEnding.UNIX
+
+    java {
+        toggleOffOn()
+
+        removeUnusedImports()
+        // Cleanthat will refactor your code, but it may break your style: apply it before your formatter
+        cleanthat()
+        formatAnnotations()
+    }
+
+    kotlin {
+        toggleOffOn()
+        ktlint()
+    }
+
+    kotlinGradle {
+        toggleOffOn()
+        target("*.gradle.kts")
+        ktlint()
+    }
 }
 
 tasks.withType<ShadowJar> {

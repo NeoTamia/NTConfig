@@ -13,4 +13,5 @@ kotlin {
 dependencies {
     implementation(libs.kotlinGradlePlugin)
     implementation(libs.shadowGradlePlugin)
+    implementation(libs.spotlessGradlePlugin)
 }
