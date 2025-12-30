@@ -133,6 +133,8 @@ publishing {
 
     publications {
         create<MavenPublication>("mavenJava") {
+            val kebabName = project.name.replace(Regex("(?<=[a-z])(?=[A-Z])"), "-").lowercase()
+            artifactId = kebabName
             pom {
                 name = "NTConfig ${project.name}"
                 description = "NTConfig, ${project.name} module."

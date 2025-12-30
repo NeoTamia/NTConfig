@@ -2,7 +2,7 @@ plugins {
     id("ntconfig-build")
 }
 
-group = "re.neotamia.config.toml"
+group = "re.neotamia.config"
 
 extra["localJarRepo"] = true
 
