@@ -1,5 +1,6 @@
 package re.neotamia.config.test
 
+// @formatter:off
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -11,20 +12,19 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 class ConfigMigrationTest {
-
     @TempDir
     lateinit var tempDir: Path
 
     class TestConfig {
         @ConfigVersion(defaultVersion = "2")
         var version: Int = 2
-        
+
         var name: String = "default"
         var value: Int = 10
-        
+
         // Nullable to simulate field that might be missing in loaded config
         var newField: String? = null
-        
+
         var deprecatedField: String? = null
     }
 
@@ -33,7 +33,7 @@ class ConfigMigrationTest {
         val backupManager = BackupManager(tempDir.resolve("backups"))
         val migrationManager = ConfigMigrationManager(backupManager)
         val configPath = tempDir.resolve("config.json")
-        
+
         // Create dummy config file so backup manager can back it up
         Files.createFile(configPath)
 
@@ -42,7 +42,7 @@ class ConfigMigrationTest {
         loadedConfig.version = 1
         loadedConfig.name = "userValue"
         loadedConfig.value = 99
-        loadedConfig.newField = null 
+        loadedConfig.newField = null
         loadedConfig.deprecatedField = "oldData"
 
         // Template (V2 defaults)
@@ -51,13 +51,13 @@ class ConfigMigrationTest {
         template.name = "default"
         template.value = 10
         template.newField = "newValue"
-        template.deprecatedField = null 
+        template.deprecatedField = null
 
         val result = migrationManager.migrate(configPath, loadedConfig, template, MergeStrategy.MERGE_MISSING_ONLY)
 
         assertTrue(result.wasMigrated(), "Should be migrated")
         assertTrue(result.hasBackup(), "Should have backup")
-        
+
         val migratedConfig = result.config
         assertEquals(2, migratedConfig.version, "Version should be updated to 2")
         assertEquals("userValue", migratedConfig.name, "Existing field should be preserved")
@@ -70,7 +70,7 @@ class ConfigMigrationTest {
     fun `test migration with OVERRIDE`() {
         val migrationManager = ConfigMigrationManager(BackupManager(tempDir))
         val configPath = tempDir.resolve("config.json")
-        
+
         // Create dummy config file so backup manager can back it up
         Files.createFile(configPath)
 
@@ -88,7 +88,7 @@ class ConfigMigrationTest {
         val result = migrationManager.migrate(configPath, loadedConfig, template, MergeStrategy.OVERRIDE)
 
         assertTrue(result.wasMigrated())
-        
+
         // Should be exactly the template
         val migratedConfig = result.config
         assertEquals(2, migratedConfig.version)
@@ -101,7 +101,7 @@ class ConfigMigrationTest {
     fun `test migration with VERSION_ONLY`() {
         val migrationManager = ConfigMigrationManager(BackupManager(tempDir))
         val configPath = tempDir.resolve("config.json")
-        
+
         // Create dummy config file so backup manager can back it up
         Files.createFile(configPath)
 
@@ -120,14 +120,14 @@ class ConfigMigrationTest {
         val result = migrationManager.migrate(configPath, loadedConfig, template, MergeStrategy.VERSION_ONLY)
 
         assertTrue(result.wasMigrated())
-        
+
         val migratedConfig = result.config
         assertEquals(2, migratedConfig.version)
         assertEquals("userValue", migratedConfig.name)
         assertEquals(99, migratedConfig.value)
         assertNull(migratedConfig.newField) // Should NOT be updated
     }
-    
+
     @Test
     fun `test no migration needed when versions match`() {
         val migrationManager = ConfigMigrationManager(BackupManager(tempDir))
@@ -135,7 +135,7 @@ class ConfigMigrationTest {
 
         val loadedConfig = TestConfig()
         loadedConfig.version = 2
-        
+
         val template = TestConfig()
         template.version = 2
 
