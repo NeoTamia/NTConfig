@@ -8,6 +8,7 @@ import re.neotamia.config.migration.MergeStrategy;
 import re.neotamia.config.migration.MigrationHook;
 import re.neotamia.config.migration.VersionUtils;
 import re.neotamia.config.registry.FormatRegistry;
+import re.neotamia.config.registry.TypeAdapterRegistry;
 import re.neotamia.nightconfig.core.ConfigFormat;
 import re.neotamia.nightconfig.core.file.FileConfig;
 import re.neotamia.nightconfig.core.serde.*;
@@ -17,6 +18,7 @@ import java.nio.file.Path;
 
 public class NTConfig {
     private final FormatRegistry formatRegistry = new FormatRegistry();
+    private final TypeAdapterRegistry typeAdapterRegistry = new TypeAdapterRegistry();
     private final ObjectSerializer objectSerializer;
     private final ObjectDeserializer objectDeserializer;
     private ConfigMigrationManager migrationManager;
@@ -61,6 +63,21 @@ public class NTConfig {
      * @return the file configuration used for saving; never null
      * @throws RuntimeException if any errors occur during the serialization or saving process
      */
+    public <T> @NotNull FileConfig save(@NotNull String path, @NotNull T config) throws RuntimeException {
+        return save(Path.of(path), config);
+    }
+
+    /**
+     * Serializes the provided configuration object and saves it to a file at the specified path.
+     * This method creates a file configuration for the given path, serializes the fields of
+     * the provided configuration object into it, and then saves the configuration to the file.
+     *
+     * @param <T>    the type of the configuration object
+     * @param path   the path to the configuration file; must not be null
+     * @param config the configuration object to serialize and save; must not be null
+     * @return the file configuration used for saving; never null
+     * @throws RuntimeException if any errors occur during the serialization or saving process
+     */
     public <T> @NotNull FileConfig save(@NotNull Path path, @NotNull T config) throws RuntimeException {
         FileConfig fileConfig = FileConfig.builder(path).sync().build();
         return save(fileConfig, config);
@@ -81,6 +98,21 @@ public class NTConfig {
         this.objectSerializer.serializeFields(config, fileConfig);
         fileConfig.save();
         return fileConfig;
+    }
+
+    /**
+     * Loads and deserializes a configuration file into the provided instance.
+     * This method loads the configuration from the specified file path and
+     * deserializes the loaded data into the fields of the given instance.
+     *
+     * @param <T>      the type of the configuration object
+     * @param path     the path to the configuration file; must not be null
+     * @param instance the instance to populate with the deserialized configuration data; must not be null
+     * @return the provided instance populated with the deserialized configuration data; never null
+     * @throws RuntimeException if any errors occur during the deserialization process
+     */
+    public <T> @Nullable T load(@NotNull String path, @NotNull T instance) throws RuntimeException {
+        return load(Path.of(path), instance);
     }
 
     /**
@@ -152,6 +184,7 @@ public class NTConfig {
     public <T, R> void registerTypeAdapter(@NotNull TypeAdapter<T, R> adapter) {
         this.objectSerializer.registerSerializerForClass(adapter.valueClass(), adapter);
         this.objectDeserializer.registerDeserializerForClass(adapter.resultClass(), adapter.valueClass(), adapter);
+        this.typeAdapterRegistry.register(adapter);
     }
 
     /**
