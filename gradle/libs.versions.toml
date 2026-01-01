@@ -7,7 +7,7 @@ kotlin = "2.3.0"
 shadow = "9.3.0"
 spotless = "8.1.0"
 
-nightConfig = "3.10.1"
+nightConfig = "3.10.2"
 
 [libraries]
 kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
