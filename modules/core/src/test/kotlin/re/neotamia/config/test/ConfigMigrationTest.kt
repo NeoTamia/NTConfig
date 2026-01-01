@@ -1,6 +1,6 @@
 package re.neotamia.config.test
 
-// @formatter:off
+// spotless:off
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
