@@ -2,13 +2,11 @@ package re.neotamia.config;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import re.neotamia.config.adapter.TypeAdapter;
 import re.neotamia.config.migration.ConfigMigrationManager;
 import re.neotamia.config.migration.MergeStrategy;
 import re.neotamia.config.migration.MigrationHook;
 import re.neotamia.config.migration.VersionUtils;
 import re.neotamia.config.registry.FormatRegistry;
-import re.neotamia.config.registry.TypeAdapterRegistry;
 import re.neotamia.nightconfig.core.ConfigFormat;
 import re.neotamia.nightconfig.core.file.FileConfig;
 import re.neotamia.nightconfig.core.serde.*;
@@ -18,7 +16,6 @@ import java.nio.file.Path;
 
 public class NTConfig {
     private final FormatRegistry formatRegistry = new FormatRegistry();
-    private final TypeAdapterRegistry typeAdapterRegistry = new TypeAdapterRegistry();
     private final ObjectSerializer objectSerializer;
     private final ObjectDeserializer objectDeserializer;
     private ConfigMigrationManager migrationManager;
@@ -182,9 +179,8 @@ public class NTConfig {
      * @param adapter the type adapter to register; must not be null
      */
     public <T, R> void registerTypeAdapter(@NotNull TypeAdapter<T, R> adapter) {
-        this.objectSerializer.registerSerializerForClass(adapter.valueClass(), adapter);
-        this.objectDeserializer.registerDeserializerForClass(adapter.resultClass(), adapter.valueClass(), adapter);
-        this.typeAdapterRegistry.register(adapter);
+        this.objectSerializer.registerTypeAdapter(adapter);
+        this.objectDeserializer.registerTypeAdapter(adapter);
     }
 
     /**
