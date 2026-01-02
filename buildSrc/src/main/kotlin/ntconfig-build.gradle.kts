@@ -57,6 +57,7 @@ spotless {
 
     java {
         toggleOffOn()
+        targetExclude("**/src/test/**")
 
         removeUnusedImports()
         // Cleanthat will refactor your code, but it may break your style: apply it before your formatter
@@ -66,6 +67,7 @@ spotless {
 
     kotlin {
         toggleOffOn()
+        targetExclude("**/src/test/**")
         ktlint()
     }
 
