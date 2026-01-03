@@ -9,13 +9,11 @@ import re.neotamia.nightconfig.core.serde.DeserializerContext
 import re.neotamia.nightconfig.core.serde.NamingStrategy
 import re.neotamia.nightconfig.core.serde.SerializerContext
 import re.neotamia.nightconfig.core.serde.TypeAdapter
-import re.neotamia.nightconfig.core.serde.TypeConstraint
 import re.neotamia.nightconfig.core.serde.annotations.SerdeComment
 import re.neotamia.nightconfig.core.serde.annotations.SerdeConfig
 import re.neotamia.nightconfig.json.JsonFormat
 import re.neotamia.nightconfig.toml.TomlFormat
 import re.neotamia.nightconfig.yaml.YamlFormat
-import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.nio.file.Path
 
@@ -73,17 +71,9 @@ data class InnerNestedConfig(
 class ResourceLocationTypeAdapter : TypeAdapter<ResourceLocation, String> {
     override fun canHandle(type: Type): Boolean = type == ResourceLocation::class.java
 
-    override fun serialize(
-        value: ResourceLocation,
-        type: Type,
-        ctx: SerializerContext
-    ): String = value.namespace + ":" + value.path
+    override fun serialize(value: ResourceLocation, type: Type, ctx: SerializerContext) = value.namespace + ":" + value.path
 
-    override fun deserialize(
-        value: String,
-        type: Type,
-        ctx: DeserializerContext
-    ): ResourceLocation = ResourceLocation(value)
+    override fun deserialize(value: String, type: Type, ctx: DeserializerContext) = ResourceLocation(value)
 }
 
 interface Saveable {
@@ -139,20 +129,21 @@ fun main() {
     ntconfig.registerFormat(YamlFormat.defaultInstance(), "yaml", "yml")
     ntconfig.registerFormat(JsonFormat.fancyInstance(), "json")
     ntconfig.setNamingStrategy(NamingStrategy.KEBAB_CASE)
+    ntconfig.registerTypeAdapter(ResourceLocationTypeAdapter())
 
     // add registerConfig to keep it in memory or use singleton?
 
-        val conf = SaveableConfig()
+    val conf = SaveableConfig()
 
-        ntconfig.save("saveable.yaml", conf)
-        ntconfig.load("saveable.yaml", conf)
+    ntconfig.save("saveable.yaml", conf)
+    ntconfig.load("saveable.yaml", conf)
 
-        //    conf.name = ""
-        //    conf.value = 1111
-        //    conf.rl = ResourceLocation("minecraft", "aaaaaaaaaaaaa")
+    conf.name = ""
+    conf.value = 1111
+    conf.rl = ResourceLocation("minecraft", "aaaaaaaaaaaaa")
 
-        val fileConfig = CommentedFileConfig.builder(Path.of("saveable.yaml")).sync().build()
-        conf.save(fileConfig)
-        fileConfig.save()
-        fileConfig.close()
+    val fileConfig = CommentedFileConfig.builder(Path.of("saveable.yaml")).sync().build()
+    conf.save(fileConfig)
+    fileConfig.save()
+    fileConfig.close()
 }
