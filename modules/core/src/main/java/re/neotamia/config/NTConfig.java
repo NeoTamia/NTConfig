@@ -2,12 +2,14 @@ package re.neotamia.config;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import re.neotamia.config.annotation.ConfigHeader;
 import re.neotamia.config.migration.ConfigMigrationManager;
 import re.neotamia.config.migration.MergeStrategy;
 import re.neotamia.config.migration.MigrationHook;
 import re.neotamia.config.migration.VersionUtils;
 import re.neotamia.config.registry.FormatRegistry;
 import re.neotamia.nightconfig.core.ConfigFormat;
+import re.neotamia.nightconfig.core.file.CommentedFileConfig;
 import re.neotamia.nightconfig.core.file.FileConfig;
 import re.neotamia.nightconfig.core.serde.*;
 
@@ -99,6 +101,11 @@ public class NTConfig {
      * @throws RuntimeException if any errors occur during the serialization or saving process
      */
     public <T> @NotNull FileConfig save(@NotNull FileConfig fileConfig, @NotNull T config) throws RuntimeException {
+        if (fileConfig instanceof CommentedFileConfig commentedFileConfig) {
+            ConfigHeader header = config.getClass().getAnnotation(ConfigHeader.class);
+            if (header != null && !header.value().isEmpty())
+                commentedFileConfig.setHeaderComment(header.value());
+        }
         this.serdeContext.getSerializer().serializeFields(config, fileConfig);
         fileConfig.save();
         return fileConfig;

@@ -128,7 +128,10 @@ fun main() {
 
     // add registerConfig to keep it in memory or use singleton?
 
-    val conf = SaveableConfig()
+    val conf = Config()
+    ntconfig.save("config.yml", conf)
+
+//    val conf = SaveableConfig()
 
 //    ntconfig.save("saveable.yaml", conf)
 //    ntconfig.load("saveable.yaml", conf)
@@ -137,11 +140,11 @@ fun main() {
 //    conf.value = 1111
 //    conf.rl = ResourceLocation("minecraft", "aaaaaaaaaaaaa")
 
-    val fileConfig = CommentedFileConfig.builder(Path.of("saveable.yaml")).sync().build()
-    fileConfig.load()
-    println(fileConfig)
-    fileConfig.serdeContext = ntconfig.serdeContext
-    conf.load(fileConfig)
+//    val fileConfig = CommentedFileConfig.builder(Path.of("saveable.yaml")).sync().build()
+//    fileConfig.load()
+//    println(fileConfig)
+//    fileConfig.serdeContext = ntconfig.serdeContext
+//    conf.load(fileConfig)
 //    fileConfig.save()
-    fileConfig.close()
+//    fileConfig.close()
 }
