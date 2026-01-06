@@ -16,15 +16,14 @@ import java.nio.file.Path;
 
 public class NTConfig {
     private final FormatRegistry formatRegistry = new FormatRegistry();
-    private final ObjectSerializer objectSerializer;
-    private final ObjectDeserializer objectDeserializer;
+    private final SerdeContext serdeContext;
     private ConfigMigrationManager migrationManager;
 
     /**
      * Constructs an NTConfig instance with standard object serializer and deserializer.
      */
     public NTConfig() {
-        this(ObjectSerializer.standard(), ObjectDeserializer.standard());
+        this(SerdeContext.builder().build());
     }
 
     /**
@@ -35,7 +34,7 @@ public class NTConfig {
      * @param objectDeserializerBuilder the builder for the object deserializer; must not be null
      */
     public NTConfig(@NotNull ObjectSerializerBuilder objectSerializerBuilder, @NotNull ObjectDeserializerBuilder objectDeserializerBuilder) {
-        this(objectSerializerBuilder.build(), objectDeserializerBuilder.build());
+        this(new SerdeContext(objectSerializerBuilder.build(), objectDeserializerBuilder.build()));
     }
 
     /**
@@ -45,8 +44,16 @@ public class NTConfig {
      * @param objectDeserializer the object deserializer to use; must not be null
      */
     public NTConfig(@NotNull ObjectSerializer objectSerializer, @NotNull ObjectDeserializer objectDeserializer) {
-        this.objectSerializer = objectSerializer;
-        this.objectDeserializer = objectDeserializer;
+        this(new SerdeContext(objectSerializer, objectDeserializer));
+    }
+
+    /**
+     * Constructs an NTConfig instance with the specified SerdeContext.
+     *
+     * @param serdeContext the serde context to use; must not be null
+     */
+    public NTConfig(@NotNull SerdeContext serdeContext) {
+        this.serdeContext = serdeContext;
     }
 
     /**
@@ -92,7 +99,7 @@ public class NTConfig {
      * @throws RuntimeException if any errors occur during the serialization or saving process
      */
     public <T> @NotNull FileConfig save(@NotNull FileConfig fileConfig, @NotNull T config) throws RuntimeException {
-        this.objectSerializer.serializeFields(config, fileConfig);
+        this.serdeContext.getSerializer().serializeFields(config, fileConfig);
         fileConfig.save();
         return fileConfig;
     }
@@ -126,7 +133,7 @@ public class NTConfig {
     public <T> @Nullable T load(@NotNull Path path, @NotNull T instance) throws RuntimeException {
         FileConfig fileConfig = FileConfig.builder(path).sync().build();
         fileConfig.load();
-        this.objectDeserializer.deserializeFields(fileConfig, instance);
+        this.serdeContext.getDeserializer().deserializeFields(fileConfig, instance);
         return instance;
     }
 
@@ -165,7 +172,7 @@ public class NTConfig {
             throw new RuntimeException("Failed to create instance of class: " + clazz.getName(), e);
         }
         fileConfig.load();
-        this.objectDeserializer.deserializeFields(fileConfig, instance);
+        this.serdeContext.getDeserializer().deserializeFields(fileConfig, instance);
         return instance;
     }
 
@@ -179,8 +186,21 @@ public class NTConfig {
      * @param adapter the type adapter to register; must not be null
      */
     public <T, R> void registerTypeAdapter(@NotNull TypeAdapter<T, R> adapter) {
-        this.objectSerializer.registerTypeAdapter(adapter);
-        this.objectDeserializer.registerTypeAdapter(adapter);
+        this.serdeContext.registerTypeAdapter(adapter);
+    }
+
+    /**
+     * Returns the SerdeContext used by this NTConfig.
+     * <p>
+     * The SerdeContext is automatically attached to configs during save/load
+     * operations,
+     * enabling typed operations like {@code config.setTyped()} and
+     * {@code config.getTyped()}.
+     *
+     * @return the SerdeContext; never null
+     */
+    public @NotNull SerdeContext getSerdeContext() {
+        return this.serdeContext;
     }
 
     /**
@@ -201,8 +221,8 @@ public class NTConfig {
      * @param strategy the naming strategy to apply; must not be null
      */
     public void setNamingStrategy(@NotNull NamingStrategy strategy) {
-        this.objectSerializer.setNamingStrategy(strategy);
-        this.objectDeserializer.setNamingStrategy(strategy);
+        this.serdeContext.getSerializer().setNamingStrategy(strategy);
+        this.serdeContext.getDeserializer().setNamingStrategy(strategy);
     }
 
     /**
@@ -217,7 +237,8 @@ public class NTConfig {
      * @param <T>             the configuration type
      * @return the migration result containing the loaded/migrated configuration
      */
-    public <T> ConfigMigrationManager.MigrationResult<T> loadWithMigration(@NotNull Path path, @NotNull Class<T> clazz, @NotNull T currentTemplate, MergeStrategy strategy) {
+    public <T> ConfigMigrationManager.MigrationResult<T> loadWithMigration(@NotNull Path path, @NotNull Class<T> clazz, @NotNull T currentTemplate,
+                                                                           MergeStrategy strategy) {
         ensureMigrationManager();
 
         // Load the existing configuration
@@ -228,7 +249,8 @@ public class NTConfig {
             if (!Files.exists(path)) {
                 try (var fileConfig = save(path, currentTemplate)) {
                     // Return result indicating no migration was needed (new file created)
-                    return new ConfigMigrationManager.MigrationResult<>(currentTemplate, false, null, VersionUtils.extractVersion(currentTemplate), null);
+                    return new ConfigMigrationManager.MigrationResult<>(currentTemplate, false, null,
+                            VersionUtils.extractVersion(currentTemplate), null);
                 }
             }
             throw e;

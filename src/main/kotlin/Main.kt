@@ -95,9 +95,7 @@ data class SaveableConfig(
 ) : Saveable,
     SaveableCommented {
     override fun save(fileConfig: CommentedFileConfig) {
-        fileConfig.setHeaderComment(
-            "This is a saveable config file.\nYou can add comments to each entry."
-        )
+        fileConfig.setHeaderComment("This is a saveable config file.\nYou can add comments to each entry.")
 
         fileConfig.set<String>("name", name)
         fileConfig.setComment("name", "The name of the saveable config")
@@ -105,7 +103,7 @@ data class SaveableConfig(
         fileConfig.set<Int>("value", value)
         fileConfig.setComment("value", "An integer value")
 
-        fileConfig.set<String>("rl", rl.namespace + ":" + rl.path)
+        fileConfig.setTyped<ResourceLocation>("rl", rl)
         fileConfig.setComment("rl", "A resource location")
     }
 
@@ -114,10 +112,7 @@ data class SaveableConfig(
     override fun load(fileConfig: CommentedFileConfig) {
         name = fileConfig.getStringOrElse("name", "SaveableConfig")
         value = fileConfig.getIntOrElse("value", 100)
-        //        rl = fileConfig.getOrElse<ResourceLocation>("rl",
-        // ResourceLocation("minecraft:granite"));
-        val rlString = fileConfig.getStringOrElse("rl", "minecraft:granite")
-        rl = ResourceLocation(rlString)
+        rl = fileConfig.getTypedOrElse("rl", ResourceLocation::class.java, ResourceLocation("minecraft:granite"))
     }
 
     override fun load(fileConfig: FileConfig) {}
@@ -135,15 +130,18 @@ fun main() {
 
     val conf = SaveableConfig()
 
-    ntconfig.save("saveable.yaml", conf)
-    ntconfig.load("saveable.yaml", conf)
+//    ntconfig.save("saveable.yaml", conf)
+//    ntconfig.load("saveable.yaml", conf)
 
-    conf.name = ""
-    conf.value = 1111
-    conf.rl = ResourceLocation("minecraft", "aaaaaaaaaaaaa")
+//    conf.name = ""
+//    conf.value = 1111
+//    conf.rl = ResourceLocation("minecraft", "aaaaaaaaaaaaa")
 
     val fileConfig = CommentedFileConfig.builder(Path.of("saveable.yaml")).sync().build()
-    conf.save(fileConfig)
-    fileConfig.save()
+    fileConfig.load()
+    println(fileConfig)
+    fileConfig.serdeContext = ntconfig.serdeContext
+    conf.load(fileConfig)
+//    fileConfig.save()
     fileConfig.close()
 }
