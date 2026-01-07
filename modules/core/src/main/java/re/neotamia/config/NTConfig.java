@@ -8,6 +8,8 @@ import re.neotamia.config.migration.MergeStrategy;
 import re.neotamia.config.migration.MigrationHook;
 import re.neotamia.config.migration.VersionUtils;
 import re.neotamia.config.registry.FormatRegistry;
+import re.neotamia.config.saveable.Saveable;
+import re.neotamia.config.saveable.SaveableCommented;
 import re.neotamia.nightconfig.core.ConfigFormat;
 import re.neotamia.nightconfig.core.file.CommentedFileConfig;
 import re.neotamia.nightconfig.core.file.FileConfig;
@@ -106,9 +108,29 @@ public class NTConfig {
             if (header != null && !header.value().isEmpty())
                 commentedFileConfig.setHeaderComment(header.value());
         }
-        this.serdeContext.getSerializer().serializeFields(config, fileConfig);
+
+        saveToConfig(fileConfig, config);
+
         fileConfig.save();
         return fileConfig;
+    }
+
+    /**
+     * Saves the provided configuration object to the specified file configuration. The saving behavior
+     * depends on the type of the configuration object and the file configuration.
+     *
+     * @param fileConfig the file configuration to which the data will be saved; must not be null
+     * @param config the configuration object to be saved; must not be null
+     * @param <T> the type of the configuration object
+     */
+    private <T> void saveToConfig(@NotNull FileConfig fileConfig, @NotNull T config) {
+        fileConfig.setSerdeContext(this.serdeContext);
+        if (config instanceof SaveableCommented saveableCommented && fileConfig instanceof CommentedFileConfig commentedFileConfig)
+            saveableCommented.save(commentedFileConfig);
+        else if (config instanceof Saveable saveable)
+            saveable.save(fileConfig);
+        else
+            this.serdeContext.getSerializer().serializeFields(config, fileConfig);
     }
 
     /**
@@ -140,7 +162,7 @@ public class NTConfig {
     public <T> @Nullable T load(@NotNull Path path, @NotNull T instance) throws RuntimeException {
         FileConfig fileConfig = FileConfig.builder(path).sync().build();
         fileConfig.load();
-        this.serdeContext.getDeserializer().deserializeFields(fileConfig, instance);
+        loadFromConfig(fileConfig, instance);
         return instance;
     }
 
@@ -179,8 +201,26 @@ public class NTConfig {
             throw new RuntimeException("Failed to create instance of class: " + clazz.getName(), e);
         }
         fileConfig.load();
-        this.serdeContext.getDeserializer().deserializeFields(fileConfig, instance);
+        loadFromConfig(fileConfig, instance);
         return instance;
+    }
+
+    /**
+     * Loads configuration data from the specified {@link FileConfig} into the given instance.
+     * The method determines the appropriate loading mechanism based on the type of the instance provided.
+     *
+     * @param fileConfig the configuration file object from which data will be loaded; must not be null
+     * @param instance the instance into which the configuration data will be loaded; must not be null
+     * @param <T> the type of the instance object
+     */
+    private <T> void loadFromConfig(@NotNull FileConfig fileConfig, @NotNull T instance) {
+        fileConfig.setSerdeContext(this.serdeContext);
+        if (instance instanceof SaveableCommented saveableCommented && fileConfig instanceof CommentedFileConfig commentedFileConfig)
+            saveableCommented.load(commentedFileConfig);
+        else if (instance instanceof Saveable saveable)
+            saveable.load(fileConfig);
+        else
+            this.serdeContext.getDeserializer().deserializeFields(fileConfig, instance);
     }
 
     /**

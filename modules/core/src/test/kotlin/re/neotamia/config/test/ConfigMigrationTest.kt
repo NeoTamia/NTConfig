@@ -1,7 +1,5 @@
 package re.neotamia.config.test
 
-// spotless:off
-import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import re.neotamia.config.annotation.ConfigVersion
@@ -10,6 +8,10 @@ import re.neotamia.config.migration.ConfigMigrationManager
 import re.neotamia.config.migration.MergeStrategy
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class ConfigMigrationTest {
     @TempDir
