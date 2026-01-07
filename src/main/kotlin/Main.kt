@@ -1,10 +1,10 @@
 package re.neotamia.config.main
 
 import re.neotamia.config.NTConfig
-import re.neotamia.config.saveable.Saveable
-import re.neotamia.config.saveable.SaveableCommented
 import re.neotamia.config.annotation.ConfigHeader
 import re.neotamia.config.annotation.ConfigVersion
+import re.neotamia.config.saveable.Saveable
+import re.neotamia.config.saveable.SaveableCommented
 import re.neotamia.nightconfig.core.file.CommentedFileConfig
 import re.neotamia.nightconfig.core.file.FileConfig
 import re.neotamia.nightconfig.core.serde.DeserializerContext
