@@ -4,7 +4,7 @@
 
 [versions]
 kotlin = "2.3.0"
-shadow = "9.3.0"
+shadow = "9.3.1"
 spotless = "8.1.0"
 
 nightConfig = "3.10.4"
