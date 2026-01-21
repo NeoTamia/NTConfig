@@ -362,6 +362,8 @@ ij_json_wrap_long_lines = false
 [{*.kt,*.kts}]
 ktlint_code_style = ktlint_official
 ktlint_function_signature_rule_force_multiline_when_parameter_count_greater_or_equal_than=unset
+ktlint_standard_blank-line-between-when-conditions = disabled
+ktlint_standard_multiline-expression-wrapping = disabled
 #
 ij_kotlin_align_in_columns_case_branch = false
 ij_kotlin_align_multiline_binary_operation = false
