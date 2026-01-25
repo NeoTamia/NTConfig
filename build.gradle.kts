@@ -13,9 +13,3 @@ dependencies {
 
     implementation(libs.bundles.nightConfigModule)
 }
-
-publishing {
-    publications {
-        remove(named<MavenPublication>("mavenJava").get())
-    }
-}

@@ -2,9 +2,7 @@ plugins {
     id("ntconfig-build")
 }
 
-group = "re.neotamia.config"
-
-extra["localJarRepo"] = true
+extra["publish"] = true
 
 dependencies {
     api(projects.modules.ntConfigCore)
