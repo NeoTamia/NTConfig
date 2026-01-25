@@ -78,10 +78,6 @@ spotless {
     }
 }
 
-tasks.withType<ShadowJar> {
-    archiveClassifier.set("")
-}
-
 val copyJars = tasks.register<Copy>("copyJars") {
     group = "publishing"
     description = "Copies the built JAR to a local directory."
@@ -101,10 +97,6 @@ project.afterEvaluate {
 tasks.build {
     dependsOn(tasks.shadowJar)
     finalizedBy(copyJars)
-}
-
-tasks.named<Jar>("jar") {
-    archiveClassifier.set("stripped")
 }
 
 tasks.withType<Test>().configureEach {
