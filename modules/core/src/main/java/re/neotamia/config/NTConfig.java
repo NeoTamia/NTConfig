@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import re.neotamia.config.annotation.ConfigHeader;
 import re.neotamia.config.migration.ConfigMigrationManager;
+import re.neotamia.config.migration.ConfigMigrationStep;
 import re.neotamia.config.migration.MergeStrategy;
 import re.neotamia.config.migration.MigrationHook;
 import re.neotamia.config.migration.VersionUtils;
@@ -298,24 +299,38 @@ public class NTConfig {
                                                                            MergeStrategy strategy) {
         ensureMigrationManager();
 
-        // Load the existing configuration
-        T loadedConfig;
-        try {
-            loadedConfig = load(path, clazz);
-        } catch (Exception e) {
-            if (!Files.exists(path)) {
-                try (var fileConfig = save(path, currentTemplate)) {
-                    // Return result indicating no migration was needed (new file created)
-                    return new ConfigMigrationManager.MigrationResult<>(currentTemplate, false, null,
-                            VersionUtils.extractVersion(currentTemplate), null);
-                }
+        if (!Files.exists(path)) {
+            try (var fileConfig = save(path, currentTemplate)) {
+                // Return result indicating no migration was needed (new file created)
+                return new ConfigMigrationManager.MigrationResult<>(currentTemplate, false, null,
+                        VersionUtils.extractVersion(currentTemplate), null);
             }
-            throw e;
         }
 
-        ConfigMigrationManager.MigrationResult<T> result = migrationManager.migrate(path, loadedConfig, currentTemplate, strategy);
+        FileConfig fileConfig = FileConfig.builder(path).sync().build();
+        fileConfig.load();
 
-        if (result.wasMigrated()) {
+        boolean rawMigrated = false;
+        String versionPath = VersionUtils.getVersionPath(clazz);
+        if (versionPath != null && !migrationManager.getConfigMigrationSteps().isEmpty()) {
+            var rawResult = migrationManager.migrateConfig(path, fileConfig,
+                    VersionUtils.extractVersion(currentTemplate),
+                    versionPath,
+                    VersionUtils.getDefaultVersion(clazz));
+            rawMigrated = rawResult.wasMigrated();
+        }
+
+        T loadedConfig;
+        try {
+            loadedConfig = clazz.getDeclaredConstructor().newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create instance of class: " + clazz.getName(), e);
+        }
+        loadFromConfig(fileConfig, loadedConfig);
+
+        ConfigMigrationManager.MigrationResult<T> result = migrationManager.migrate(path, loadedConfig, currentTemplate, strategy, rawMigrated);
+
+        if (result.wasMigrated() || rawMigrated) {
             var file = save(path, result.config());
             file.close();
         }
@@ -370,6 +385,14 @@ public class NTConfig {
     public void addMigrationHook(MigrationHook hook) {
         ensureMigrationManager();
         migrationManager.addHook(hook);
+    }
+
+    /**
+     * Adds a raw config migration step.
+     */
+    public void addConfigMigrationStep(ConfigMigrationStep step) {
+        ensureMigrationManager();
+        migrationManager.addConfigMigrationStep(step);
     }
 
     /**

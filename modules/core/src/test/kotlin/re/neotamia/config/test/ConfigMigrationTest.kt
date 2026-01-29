@@ -4,8 +4,13 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import re.neotamia.config.annotation.ConfigVersion
 import re.neotamia.config.migration.BackupManager
+import re.neotamia.config.migration.CommentedConfigMigrationStep
 import re.neotamia.config.migration.ConfigMigrationManager
+import re.neotamia.config.migration.ConfigMigrationStep
+import re.neotamia.config.migration.ConfigVersion as MigrationVersion
 import re.neotamia.config.migration.MergeStrategy
+import re.neotamia.nightconfig.core.CommentedConfig
+import re.neotamia.nightconfig.core.Config
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.test.assertEquals
@@ -145,5 +150,85 @@ class ConfigMigrationTest {
 
         assertFalse(result.wasMigrated())
         assertEquals(loadedConfig, result.config)
+    }
+
+    @Test
+    fun `test raw config migration steps apply in order`() {
+        val backupManager = BackupManager(tempDir.resolve("backups"))
+        val migrationManager = ConfigMigrationManager(backupManager)
+        val configPath = tempDir.resolve("config.yml")
+
+        Files.writeString(configPath, "server: proxy\nversion: 1\n")
+
+        val config = Config.inMemory()
+        config.set("version", "1")
+        config.set("server", "proxy")
+
+        migrationManager.addConfigMigrationStep(object : ConfigMigrationStep {
+            override fun fromVersion(): MigrationVersion = MigrationVersion("1")
+            override fun toVersion(): MigrationVersion = MigrationVersion("2")
+            override fun migrate(config: Config) {
+                val server = config.get<String>("server")
+                config.set("server.id", server)
+                config.remove("server")
+            }
+        })
+
+        migrationManager.addConfigMigrationStep(object : ConfigMigrationStep {
+            override fun fromVersion(): MigrationVersion = MigrationVersion("2")
+            override fun toVersion(): MigrationVersion = MigrationVersion("3")
+            override fun migrate(config: Config) {
+                config.set("server.enabled", true)
+            }
+        })
+
+        val result = migrationManager.migrateConfig(
+            configPath,
+            config,
+            MigrationVersion("3"),
+            "version",
+            MigrationVersion("1")
+        )
+
+        assertTrue(result.wasMigrated())
+        assertTrue(result.hasBackup())
+        assertEquals("proxy", config.get<String>("server.id"))
+        assertEquals(true, config.get<Boolean>("server.enabled"))
+        assertEquals("3", config.get<String>("version"))
+    }
+
+    @Test
+    fun `test commented config migration step is used`() {
+        val migrationManager = ConfigMigrationManager(BackupManager(tempDir))
+        val configPath = tempDir.resolve("config.yml")
+        Files.writeString(configPath, "version: 1\n")
+
+        val config = CommentedConfig.inMemory()
+        config.set("version", "1")
+
+        val trackingStep = object : CommentedConfigMigrationStep {
+            var usedCommented = false
+
+            override fun fromVersion(): MigrationVersion = MigrationVersion("1")
+            override fun toVersion(): MigrationVersion = MigrationVersion("2")
+            override fun migrate(config: CommentedConfig) {
+                usedCommented = true
+                config.set("migrated", true)
+            }
+        }
+
+        migrationManager.addConfigMigrationStep(trackingStep)
+
+        val result = migrationManager.migrateConfig(
+            configPath,
+            config,
+            MigrationVersion("2"),
+            "version",
+            MigrationVersion("1")
+        )
+
+        assertTrue(result.wasMigrated())
+        assertTrue(trackingStep.usedCommented)
+        assertEquals(true, config.get<Boolean>("migrated"))
     }
 }

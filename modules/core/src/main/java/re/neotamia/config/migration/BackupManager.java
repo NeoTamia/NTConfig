@@ -67,6 +67,17 @@ public record BackupManager(Path backupDirectory, boolean enabled) {
         return createBackup(configPath, (ConfigVersion) null);
     }
 
+    /**
+     * Restores a configuration file from a backup.
+     *
+     * @param backupPath the backup file path
+     * @param configPath the original configuration file path
+     * @throws IOException if the restore fails
+     */
+    public void restoreBackup(@NotNull Path backupPath, @NotNull Path configPath) throws IOException {
+        Files.copy(backupPath, configPath, StandardCopyOption.REPLACE_EXISTING);
+    }
+
     private @NotNull String getFileNameWithoutExtension(@NotNull String fileName) {
         int lastDot = fileName.lastIndexOf('.');
         return lastDot == -1 ? fileName : fileName.substring(0, lastDot);

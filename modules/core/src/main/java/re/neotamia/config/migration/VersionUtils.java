@@ -3,6 +3,7 @@ package re.neotamia.config.migration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import re.neotamia.config.annotation.ConfigVersion;
+import re.neotamia.nightconfig.core.Config;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -105,6 +106,57 @@ public class VersionUtils {
 
         ConfigVersion annotation = versionField.getAnnotation(ConfigVersion.class);
         return new re.neotamia.config.migration.ConfigVersion(annotation.defaultVersion());
+    }
+
+    /**
+     * Gets the config path to the version field for a configuration class.
+     *
+     * @param clazz the configuration class
+     * @return the version path, or null if no version field exists
+     */
+    public static @Nullable String getVersionPath(@NotNull Class<?> clazz) {
+        Field versionField = findVersionField(clazz);
+        if (versionField == null) return null;
+
+        ConfigVersion annotation = versionField.getAnnotation(ConfigVersion.class);
+        if (annotation != null && !annotation.path().isBlank()) {
+            return annotation.path();
+        }
+
+        return versionField.getName();
+    }
+
+    /**
+     * Extracts the version from a raw NightConfig config.
+     *
+     * @param config        the raw config
+     * @param versionPath   the config path of the version value
+     * @param defaultVersion fallback version when none is present
+     * @return the extracted version, or the default if missing
+     */
+    public static @Nullable re.neotamia.config.migration.ConfigVersion extractVersion(@Nullable Config config,
+                                                                                      @NotNull String versionPath,
+                                                                                      @Nullable re.neotamia.config.migration.ConfigVersion defaultVersion) {
+        if (config == null) return defaultVersion;
+
+        Object value = config.get(versionPath);
+        if (value == null) return defaultVersion;
+
+        return convertToConfigVersion(value);
+    }
+
+    /**
+     * Sets the version in a raw NightConfig config.
+     *
+     * @param config      the raw config
+     * @param versionPath the config path of the version value
+     * @param version     the version to set
+     */
+    public static void setVersion(@Nullable Config config,
+                                  @NotNull String versionPath,
+                                  @Nullable re.neotamia.config.migration.ConfigVersion version) {
+        if (config == null || version == null) return;
+        config.set(versionPath, version.getVersion());
     }
 
     private static @NotNull re.neotamia.config.migration.ConfigVersion convertToConfigVersion(@NotNull Object value) {

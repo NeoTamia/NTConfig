@@ -23,4 +23,12 @@ public @interface ConfigVersion {
      * @return the default version string
      */
     String defaultVersion() default "1";
+
+    /**
+     * Optional config path override for the version field when using raw config migrations.
+     * If empty, the field name will be used.
+     *
+     * @return the config path to the version field
+     */
+    String path() default "";
 }
