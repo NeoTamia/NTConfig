@@ -2,6 +2,7 @@ package re.neotamia.config.test
 
 import re.neotamia.config.NTConfig
 import re.neotamia.config.NTConfigException
+import re.neotamia.config.SerdeErrorFormatter
 import re.neotamia.nightconfig.toml.TomlFormat
 import java.nio.file.Files
 import java.nio.file.Path
@@ -112,9 +113,9 @@ class NTConfigSerdeErrorTest {
         val exc2 = createExc("Error in field `re.neotamia.config.B.fieldB`", exc3)
         val exc1 = createExc("Error in field `re.neotamia.config.A.fieldA`", exc2)
 
-        val method = NTConfig::class.java.getDeclaredMethod("buildSerdeMessage", String::class.java, String::class.java, serdeExcClass)
+        val method = SerdeErrorFormatter::class.java.getDeclaredMethod("buildSerdeMessage", String::class.java, String::class.java, serdeExcClass)
         method.isAccessible = true
-
+        
         val result = method.invoke(null, "test", "re.neotamia.config.A", exc1) as String
 
         println("Reflection Result: $result")
@@ -143,7 +144,7 @@ class NTConfigSerdeErrorTest {
 
     @Test
     fun testParseFieldDescriptorVariants() {
-        val method = NTConfig::class.java.getDeclaredMethod("parseFieldDescriptor", String::class.java)
+        val method = SerdeErrorFormatter::class.java.getDeclaredMethod("parseFieldDescriptor", String::class.java)
         method.isAccessible = true
 
         fun parse(desc: String): Any {
@@ -170,7 +171,7 @@ class NTConfigSerdeErrorTest {
 
     @Test
     fun testFindRootCauseMessage() {
-        val method = NTConfig::class.java.getDeclaredMethod("findRootCauseMessage", Throwable::class.java)
+        val method = SerdeErrorFormatter::class.java.getDeclaredMethod("findRootCauseMessage", Throwable::class.java)
         method.isAccessible = true
 
         fun find(t: Throwable): String = method.invoke(null, t) as String
