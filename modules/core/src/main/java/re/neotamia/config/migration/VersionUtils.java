@@ -2,6 +2,7 @@ package re.neotamia.config.migration;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import re.neotamia.config.annotation.ConfigVersion;
 import re.neotamia.nightconfig.core.Config;
 
 import java.lang.reflect.Field;
@@ -33,7 +34,7 @@ public class VersionUtils {
 
             if (value == null) {
                 // Use default version from annotation
-                MigrationVersion annotation = versionField.getAnnotation(MigrationVersion.class);
+                ConfigVersion annotation = versionField.getAnnotation(ConfigVersion.class);
                 String defaultVersion = annotation.defaultVersion();
                 return new MigrationVersion(defaultVersion);
             }
@@ -77,7 +78,7 @@ public class VersionUtils {
     public static @Nullable Field findVersionField(@NotNull Class<?> clazz) {
         for (Field field : clazz.getDeclaredFields()) {
             if (Modifier.isStatic(field.getModifiers())) continue;
-            if (field.isAnnotationPresent(MigrationVersion.class))
+            if (field.isAnnotationPresent(ConfigVersion.class))
                 return field;
         }
         return null;
@@ -103,7 +104,7 @@ public class VersionUtils {
         Field versionField = findVersionField(clazz);
         if (versionField == null) return null;
 
-        MigrationVersion annotation = versionField.getAnnotation(MigrationVersion.class);
+        ConfigVersion annotation = versionField.getAnnotation(ConfigVersion.class);
         return new MigrationVersion(annotation.defaultVersion());
     }
 
@@ -117,7 +118,7 @@ public class VersionUtils {
         Field versionField = findVersionField(clazz);
         if (versionField == null) return null;
 
-        MigrationVersion annotation = versionField.getAnnotation(MigrationVersion.class);
+        ConfigVersion annotation = versionField.getAnnotation(ConfigVersion.class);
         if (annotation != null && !annotation.path().isBlank()) {
             return annotation.path();
         }
