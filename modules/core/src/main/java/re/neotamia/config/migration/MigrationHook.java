@@ -16,7 +16,7 @@ public interface MigrationHook {
      * @param newVersion the target version for migration
      * @param strategy the merge strategy being used
      */
-    default void beforeMigration(Path configPath, ConfigVersion oldVersion, ConfigVersion newVersion, MergeStrategy strategy) {
+    default void beforeMigration(Path configPath, MigrationVersion oldVersion, MigrationVersion newVersion, MergeStrategy strategy) {
         // Default implementation does nothing
     }
     
@@ -28,7 +28,7 @@ public interface MigrationHook {
      * @param oldVersion the current version of the configuration
      * @param newVersion the target version for migration
      */
-    default void afterBackup(Path configPath, Path backupPath, ConfigVersion oldVersion, ConfigVersion newVersion) {
+    default void afterBackup(Path configPath, Path backupPath, MigrationVersion oldVersion, MigrationVersion newVersion) {
         // Default implementation does nothing
     }
     
@@ -41,7 +41,7 @@ public interface MigrationHook {
      * @param newVersion the new version of the configuration
      * @param strategy the merge strategy that was used
      */
-    default void afterMigration(Path configPath, Path backupPath, ConfigVersion oldVersion, ConfigVersion newVersion, MergeStrategy strategy) {
+    default void afterMigration(Path configPath, Path backupPath, MigrationVersion oldVersion, MigrationVersion newVersion, MergeStrategy strategy) {
         // Default implementation does nothing
     }
     
@@ -54,7 +54,7 @@ public interface MigrationHook {
      * @param strategy the merge strategy that was being used
      * @param exception the exception that caused the failure
      */
-    default void onMigrationFailed(Path configPath, ConfigVersion oldVersion, ConfigVersion newVersion, MergeStrategy strategy, Exception exception) {
+    default void onMigrationFailed(Path configPath, MigrationVersion oldVersion, MigrationVersion newVersion, MergeStrategy strategy, Exception exception) {
         // Default implementation does nothing
     }
     
@@ -64,7 +64,7 @@ public interface MigrationHook {
      * @param configPath the path to the configuration file
      * @param version the current version of the configuration
      */
-    default void onNoMigrationNeeded(Path configPath, ConfigVersion version) {
+    default void onNoMigrationNeeded(Path configPath, MigrationVersion version) {
         // Default implementation does nothing
     }
 }

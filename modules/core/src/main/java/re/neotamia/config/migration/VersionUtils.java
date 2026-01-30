@@ -2,7 +2,6 @@ package re.neotamia.config.migration;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import re.neotamia.config.annotation.ConfigVersion;
 import re.neotamia.nightconfig.core.Config;
 
 import java.lang.reflect.Field;
@@ -20,7 +19,7 @@ public class VersionUtils {
      * @return the extracted version, or null if no version field is found
      * @throws RuntimeException if version extraction fails
      */
-    public static @Nullable re.neotamia.config.migration.ConfigVersion extractVersion(@Nullable Object config) {
+    public static @Nullable MigrationVersion extractVersion(@Nullable Object config) {
         if (config == null) return null;
 
         Class<?> clazz = config.getClass();
@@ -34,9 +33,9 @@ public class VersionUtils {
 
             if (value == null) {
                 // Use default version from annotation
-                ConfigVersion annotation = versionField.getAnnotation(ConfigVersion.class);
+                MigrationVersion annotation = versionField.getAnnotation(MigrationVersion.class);
                 String defaultVersion = annotation.defaultVersion();
-                return new re.neotamia.config.migration.ConfigVersion(defaultVersion);
+                return new MigrationVersion(defaultVersion);
             }
 
             return convertToConfigVersion(value);
@@ -52,7 +51,7 @@ public class VersionUtils {
      * @param version the version to set
      * @throws RuntimeException if version setting fails
      */
-    public static void setVersion(@Nullable Object config, @Nullable re.neotamia.config.migration.ConfigVersion version) {
+    public static void setVersion(@Nullable Object config, @Nullable MigrationVersion version) {
         if (config == null || version == null) return;
 
         Class<?> clazz = config.getClass();
@@ -78,7 +77,7 @@ public class VersionUtils {
     public static @Nullable Field findVersionField(@NotNull Class<?> clazz) {
         for (Field field : clazz.getDeclaredFields()) {
             if (Modifier.isStatic(field.getModifiers())) continue;
-            if (field.isAnnotationPresent(ConfigVersion.class))
+            if (field.isAnnotationPresent(MigrationVersion.class))
                 return field;
         }
         return null;
@@ -100,12 +99,12 @@ public class VersionUtils {
      * @param clazz the configuration class
      * @return the default version, or null if no version field exists
      */
-    public static @Nullable re.neotamia.config.migration.ConfigVersion getDefaultVersion(@NotNull Class<?> clazz) {
+    public static @Nullable MigrationVersion getDefaultVersion(@NotNull Class<?> clazz) {
         Field versionField = findVersionField(clazz);
         if (versionField == null) return null;
 
-        ConfigVersion annotation = versionField.getAnnotation(ConfigVersion.class);
-        return new re.neotamia.config.migration.ConfigVersion(annotation.defaultVersion());
+        MigrationVersion annotation = versionField.getAnnotation(MigrationVersion.class);
+        return new MigrationVersion(annotation.defaultVersion());
     }
 
     /**
@@ -118,7 +117,7 @@ public class VersionUtils {
         Field versionField = findVersionField(clazz);
         if (versionField == null) return null;
 
-        ConfigVersion annotation = versionField.getAnnotation(ConfigVersion.class);
+        MigrationVersion annotation = versionField.getAnnotation(MigrationVersion.class);
         if (annotation != null && !annotation.path().isBlank()) {
             return annotation.path();
         }
@@ -134,9 +133,7 @@ public class VersionUtils {
      * @param defaultVersion fallback version when none is present
      * @return the extracted version, or the default if missing
      */
-    public static @Nullable re.neotamia.config.migration.ConfigVersion extractVersion(@Nullable Config config,
-                                                                                      @NotNull String versionPath,
-                                                                                      @Nullable re.neotamia.config.migration.ConfigVersion defaultVersion) {
+    public static @Nullable MigrationVersion extractVersion(@Nullable Config config, @NotNull String versionPath, @Nullable MigrationVersion defaultVersion) {
         if (config == null) return defaultVersion;
 
         Object value = config.get(versionPath);
@@ -152,23 +149,21 @@ public class VersionUtils {
      * @param versionPath the config path of the version value
      * @param version     the version to set
      */
-    public static void setVersion(@Nullable Config config,
-                                  @NotNull String versionPath,
-                                  @Nullable re.neotamia.config.migration.ConfigVersion version) {
+    public static void setVersion(@Nullable Config config, @NotNull String versionPath, @Nullable MigrationVersion version) {
         if (config == null || version == null) return;
         config.set(versionPath, version.getVersion());
     }
 
-    private static @NotNull re.neotamia.config.migration.ConfigVersion convertToConfigVersion(@NotNull Object value) {
+    private static @NotNull MigrationVersion convertToConfigVersion(@NotNull Object value) {
         return switch (value) {
-            case String s -> new re.neotamia.config.migration.ConfigVersion(s);
-            case Integer i -> new re.neotamia.config.migration.ConfigVersion(i);
-            case Number number -> new re.neotamia.config.migration.ConfigVersion(number.intValue());
+            case String s -> new MigrationVersion(s);
+            case Integer i -> new MigrationVersion(i);
+            case Number number -> new MigrationVersion(number.intValue());
             default -> throw new IllegalArgumentException("Version field must be String, int, or Integer, but was: " + value.getClass().getName());
         };
     }
 
-    private static Object convertFromConfigVersion(@NotNull re.neotamia.config.migration.ConfigVersion version, @NotNull Class<?> fieldType) {
+    private static Object convertFromConfigVersion(@NotNull MigrationVersion version, @NotNull Class<?> fieldType) {
         if (fieldType == String.class)
             return version.getVersion();
         if (fieldType == int.class || fieldType == Integer.class)

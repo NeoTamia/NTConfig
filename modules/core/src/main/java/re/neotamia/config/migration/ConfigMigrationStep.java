@@ -10,12 +10,12 @@ public interface ConfigMigrationStep {
     /**
      * The version this step migrates from.
      */
-    @NotNull ConfigVersion fromVersion();
+    @NotNull MigrationVersion fromVersion();
 
     /**
      * The version this step migrates to.
      */
-    @NotNull ConfigVersion toVersion();
+    @NotNull MigrationVersion toVersion();
 
     /**
      * Applies the migration to the provided config.

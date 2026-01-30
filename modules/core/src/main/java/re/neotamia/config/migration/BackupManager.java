@@ -28,7 +28,7 @@ public record BackupManager(Path backupDirectory, boolean enabled) {
      * @return the path to the created backup file, or null if backups are disabled
      * @throws IOException if the backup creation fails
      */
-    public @Nullable Path createBackup(@NotNull Path configPath, @Nullable ConfigVersion version) throws IOException {
+    public @Nullable Path createBackup(@NotNull Path configPath, @Nullable MigrationVersion version) throws IOException {
         return this.createBackup(configPath, version != null ? "v_" + version.getVersion() : "");
     }
 
@@ -64,7 +64,7 @@ public record BackupManager(Path backupDirectory, boolean enabled) {
      * Simple backup with just a timestamp.
      */
     public Path createBackup(@NotNull Path configPath) throws IOException {
-        return createBackup(configPath, (ConfigVersion) null);
+        return createBackup(configPath, (MigrationVersion) null);
     }
 
     /**

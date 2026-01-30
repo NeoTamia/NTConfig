@@ -42,10 +42,7 @@ public class ConfigMigrationManager {
      * @param <T>             the configuration type
      * @return the migrated configuration, or the original if no migration was needed
      */
-    public <T> @NotNull MigrationResult<T> migrate(@NotNull Path configPath,
-                                                   T loadedConfig,
-                                                   @NotNull T currentTemplate,
-                                                   @Nullable MergeStrategy strategy) {
+    public <T> @NotNull MigrationResult<T> migrate(@NotNull Path configPath, T loadedConfig, @NotNull T currentTemplate, @Nullable MergeStrategy strategy) {
         return migrate(configPath, loadedConfig, currentTemplate, strategy, false);
     }
 
@@ -60,19 +57,15 @@ public class ConfigMigrationManager {
      * @param <T>             the configuration type
      * @return the migrated configuration, or the original if no migration was needed
      */
-    public <T> @NotNull MigrationResult<T> migrate(@NotNull Path configPath,
-                                                   T loadedConfig,
-                                                   @NotNull T currentTemplate,
-                                                   @Nullable MergeStrategy strategy,
+    public <T> @NotNull MigrationResult<T> migrate(@NotNull Path configPath, T loadedConfig, @NotNull T currentTemplate, @Nullable MergeStrategy strategy,
                                                    boolean forceMerge) {
-        if (strategy == null) {
+        if (strategy == null)
             strategy = defaultMergeStrategy;
-        }
 
         try {
             // Extract versions
-            ConfigVersion loadedVersion = VersionUtils.extractVersion(loadedConfig);
-            ConfigVersion currentVersion = VersionUtils.extractVersion(currentTemplate);
+            MigrationVersion loadedVersion = VersionUtils.extractVersion(loadedConfig);
+            MigrationVersion currentVersion = VersionUtils.extractVersion(currentTemplate);
 
             // If no version fields exist, no migration is possible
             if (loadedVersion == null && currentVersion == null) {
@@ -84,7 +77,7 @@ public class ConfigMigrationManager {
             if (loadedVersion == null) {
                 loadedVersion = VersionUtils.getDefaultVersion(currentTemplate.getClass());
                 if (loadedVersion == null)
-                    loadedVersion = new ConfigVersion("1"); // Fallback
+                    loadedVersion = new MigrationVersion("1"); // Fallback
                 // Set version in loaded config for consistency
                 VersionUtils.setVersion(loadedConfig, loadedVersion);
             }
@@ -96,8 +89,8 @@ public class ConfigMigrationManager {
             }
 
             // Migration is needed
-            final ConfigVersion finalLoadedVersion = loadedVersion;
-            final ConfigVersion finalCurrentVersion = currentVersion;
+            final MigrationVersion finalLoadedVersion = loadedVersion;
+            final MigrationVersion finalCurrentVersion = currentVersion;
             final MergeStrategy finalStrategy = strategy;
 
             callHooks(h -> h.beforeMigration(configPath, finalLoadedVersion, finalCurrentVersion, finalStrategy));
@@ -118,8 +111,8 @@ public class ConfigMigrationManager {
             return new MigrationResult<>(mergedConfig, true, loadedVersion, currentVersion, backupPath);
 
         } catch (Exception e) {
-            ConfigVersion loadedVersion = VersionUtils.extractVersion(loadedConfig);
-            ConfigVersion currentVersion = VersionUtils.extractVersion(currentTemplate);
+            MigrationVersion loadedVersion = VersionUtils.extractVersion(loadedConfig);
+            MigrationVersion currentVersion = VersionUtils.extractVersion(currentTemplate);
             final MergeStrategy finalStrategyForError = strategy;
             callHooks(h -> h.onMigrationFailed(configPath, loadedVersion, currentVersion, finalStrategyForError, e));
             throw new RuntimeException("Migration failed for " + configPath, e);
@@ -143,14 +136,11 @@ public class ConfigMigrationManager {
      * @param defaultVersion fallback version if the config has none
      * @return result describing raw migration outcome
      */
-    public @NotNull ConfigMigrationResult migrateConfig(@NotNull Path configPath,
-                                                        @NotNull Config config,
-                                                        @Nullable ConfigVersion currentVersion,
-                                                        @NotNull String versionPath,
-                                                        @Nullable ConfigVersion defaultVersion) {
+    public @NotNull ConfigMigrationResult migrateConfig(@NotNull Path configPath, @NotNull Config config, @Nullable MigrationVersion currentVersion,
+                                                        @NotNull String versionPath, @Nullable MigrationVersion defaultVersion) {
         Path backupPath = null;
         try {
-            ConfigVersion loadedVersion = VersionUtils.extractVersion(config, versionPath, defaultVersion);
+            MigrationVersion loadedVersion = VersionUtils.extractVersion(config, versionPath, defaultVersion);
 
             if (loadedVersion == null && currentVersion == null) {
                 callHooks(h -> h.onNoMigrationNeeded(configPath, null));
@@ -158,7 +148,7 @@ public class ConfigMigrationManager {
             }
 
             if (loadedVersion == null) {
-                loadedVersion = defaultVersion != null ? defaultVersion : new ConfigVersion("1");
+                loadedVersion = defaultVersion != null ? defaultVersion : new MigrationVersion("1");
                 VersionUtils.setVersion(config, versionPath, loadedVersion);
             }
 
@@ -167,8 +157,8 @@ public class ConfigMigrationManager {
                 return new ConfigMigrationResult(false, loadedVersion, currentVersion, null);
             }
 
-            ConfigVersion finalLoadedVersion = loadedVersion;
-            ConfigVersion finalCurrentVersion = currentVersion;
+            MigrationVersion finalLoadedVersion = loadedVersion;
+            MigrationVersion finalCurrentVersion = currentVersion;
             callHooks(h -> h.beforeMigration(configPath, finalLoadedVersion, finalCurrentVersion, MergeStrategy.VERSION_ONLY));
 
             if (backupManager.enabled())
@@ -191,7 +181,7 @@ public class ConfigMigrationManager {
 
             return new ConfigMigrationResult(true, finalLoadedVersion, finalCurrentVersion, backupPath);
         } catch (Exception e) {
-            ConfigVersion loadedVersion = VersionUtils.extractVersion(config, versionPath, defaultVersion);
+            MigrationVersion loadedVersion = VersionUtils.extractVersion(config, versionPath, defaultVersion);
             callHooks(h -> h.onMigrationFailed(configPath, loadedVersion, currentVersion, MergeStrategy.VERSION_ONLY, e));
             if (backupPath != null) {
                 try {
@@ -213,8 +203,8 @@ public class ConfigMigrationManager {
      * @return true if migration is needed
      */
     public <T> boolean isMigrationNeeded(T loadedConfig, T currentTemplate) {
-        ConfigVersion loadedVersion = VersionUtils.extractVersion(loadedConfig);
-        ConfigVersion currentVersion = VersionUtils.extractVersion(currentTemplate);
+        MigrationVersion loadedVersion = VersionUtils.extractVersion(loadedConfig);
+        MigrationVersion currentVersion = VersionUtils.extractVersion(currentTemplate);
 
         if (loadedVersion == null && currentVersion == null) return false;
         if (loadedVersion == null) return true; // Need to add version field
@@ -223,9 +213,8 @@ public class ConfigMigrationManager {
         return !loadedVersion.isEqualTo(currentVersion);
     }
 
-    public void addHook(@Nullable MigrationHook hook) {
-        if (hook != null)
-            hooks.add(hook);
+    public void addHook(@NotNull MigrationHook hook) {
+        hooks.add(hook);
     }
 
     public void removeHook(MigrationHook hook) {
@@ -236,9 +225,8 @@ public class ConfigMigrationManager {
         hooks.clear();
     }
 
-    public void addConfigMigrationStep(@Nullable ConfigMigrationStep step) {
-        if (step != null)
-            configMigrationSteps.add(step);
+    public void addConfigMigrationStep(@NotNull ConfigMigrationStep step) {
+        configMigrationSteps.add(step);
     }
 
     public void removeConfigMigrationStep(@NotNull ConfigMigrationStep step) {
@@ -281,10 +269,9 @@ public class ConfigMigrationManager {
         void accept(MigrationHook hook);
     }
 
-    private @NotNull List<ConfigMigrationStep> resolveSteps(@NotNull ConfigVersion fromVersion,
-                                                            @NotNull ConfigVersion toVersion) {
+    private @NotNull List<ConfigMigrationStep> resolveSteps(@NotNull MigrationVersion fromVersion, @NotNull MigrationVersion toVersion) {
         List<ConfigMigrationStep> steps = new ArrayList<>();
-        ConfigVersion current = fromVersion;
+        MigrationVersion current = fromVersion;
 
         int guard = 0;
         while (!current.isEqualTo(toVersion)) {
@@ -306,7 +293,7 @@ public class ConfigMigrationManager {
         return steps;
     }
 
-    private @Nullable ConfigMigrationStep findStepFrom(@NotNull ConfigVersion fromVersion) {
+    private @Nullable ConfigMigrationStep findStepFrom(@NotNull MigrationVersion fromVersion) {
         ConfigMigrationStep found = null;
         for (ConfigMigrationStep step : configMigrationSteps) {
             if (step.fromVersion().isEqualTo(fromVersion)) {
@@ -322,7 +309,7 @@ public class ConfigMigrationManager {
     /**
      * Result of a migration operation.
      */
-    public record MigrationResult<T>(T config, boolean migrated, ConfigVersion oldVersion, ConfigVersion newVersion, Path backupPath) {
+    public record MigrationResult<T>(T config, boolean migrated, MigrationVersion oldVersion, MigrationVersion newVersion, Path backupPath) {
         public boolean wasMigrated() {
             return migrated;
         }
@@ -346,7 +333,7 @@ public class ConfigMigrationManager {
     /**
      * Result of raw config migration.
      */
-    public record ConfigMigrationResult(boolean migrated, ConfigVersion oldVersion, ConfigVersion newVersion, Path backupPath) {
+    public record ConfigMigrationResult(boolean migrated, MigrationVersion oldVersion, MigrationVersion newVersion, Path backupPath) {
         public boolean wasMigrated() {
             return migrated;
         }

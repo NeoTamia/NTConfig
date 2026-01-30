@@ -3,7 +3,11 @@ package re.neotamia.config.test
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import re.neotamia.config.annotation.ConfigVersion
-import re.neotamia.config.migration.*
+import re.neotamia.config.migration.BackupManager
+import re.neotamia.config.migration.CommentedConfigMigrationStep
+import re.neotamia.config.migration.ConfigMigrationManager
+import re.neotamia.config.migration.ConfigMigrationStep
+import re.neotamia.config.migration.MergeStrategy
 import re.neotamia.nightconfig.core.CommentedConfig
 import re.neotamia.nightconfig.core.Config
 import java.nio.file.Files
@@ -12,7 +16,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import re.neotamia.config.migration.ConfigVersion as MigrationVersion
+import re.neotamia.config.migration.MigrationVersion as MigrationVersion
 
 class ConfigMigrationTest {
     @TempDir
