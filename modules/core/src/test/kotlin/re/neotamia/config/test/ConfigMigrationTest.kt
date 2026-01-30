@@ -171,8 +171,8 @@ class ConfigMigrationTest {
 
             override fun migrate(config: Config) {
                 val server = config.get<String>("server")
-                config.set<String>("server.id", server)
                 config.remove<String>("server")
+                config.set<String>("server.id", server)
             }
         })
 
