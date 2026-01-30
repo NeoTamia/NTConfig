@@ -3,12 +3,7 @@ package re.neotamia.config.test
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import re.neotamia.config.annotation.ConfigVersion
-import re.neotamia.config.migration.BackupManager
-import re.neotamia.config.migration.CommentedConfigMigrationStep
-import re.neotamia.config.migration.ConfigMigrationManager
-import re.neotamia.config.migration.ConfigMigrationStep
-import re.neotamia.config.migration.ConfigVersion as MigrationVersion
-import re.neotamia.config.migration.MergeStrategy
+import re.neotamia.config.migration.*
 import re.neotamia.nightconfig.core.CommentedConfig
 import re.neotamia.nightconfig.core.Config
 import java.nio.file.Files
@@ -17,6 +12,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import re.neotamia.config.migration.ConfigVersion as MigrationVersion
 
 class ConfigMigrationTest {
     @TempDir
@@ -161,24 +157,28 @@ class ConfigMigrationTest {
         Files.writeString(configPath, "server: proxy\nversion: 1\n")
 
         val config = Config.inMemory()
-        config.set("version", "1")
-        config.set("server", "proxy")
+        config.set<String>("version", "1")
+        config.set<String>("server", "proxy")
 
         migrationManager.addConfigMigrationStep(object : ConfigMigrationStep {
             override fun fromVersion(): MigrationVersion = MigrationVersion("1")
+
             override fun toVersion(): MigrationVersion = MigrationVersion("2")
+
             override fun migrate(config: Config) {
                 val server = config.get<String>("server")
-                config.set("server.id", server)
-                config.remove("server")
+                config.set<String>("server.id", server)
+                config.remove<String>("server")
             }
         })
 
         migrationManager.addConfigMigrationStep(object : ConfigMigrationStep {
             override fun fromVersion(): MigrationVersion = MigrationVersion("2")
+
             override fun toVersion(): MigrationVersion = MigrationVersion("3")
+
             override fun migrate(config: Config) {
-                config.set("server.enabled", true)
+                config.set<String>("server.enabled", true)
             }
         })
 
@@ -204,16 +204,18 @@ class ConfigMigrationTest {
         Files.writeString(configPath, "version: 1\n")
 
         val config = CommentedConfig.inMemory()
-        config.set("version", "1")
+        config.set<String>("version", "1")
 
         val trackingStep = object : CommentedConfigMigrationStep {
             var usedCommented = false
 
             override fun fromVersion(): MigrationVersion = MigrationVersion("1")
+
             override fun toVersion(): MigrationVersion = MigrationVersion("2")
+
             override fun migrate(config: CommentedConfig) {
                 usedCommented = true
-                config.set("migrated", true)
+                config.set<Boolean>("migrated", true)
             }
         }
 
