@@ -14,6 +14,12 @@ plugins {
 group = "re.neotamia.config"
 version = findProperty("version")!!
 
+val moduleName = project.path.removePrefix(":modules").replace(":", "-")
+val baseName = if (moduleName == "-" || moduleName.isEmpty()) "NTConfig" else "NTConfig$moduleName"
+base {
+    archivesName.set(baseName)
+}
+
 repositories {
     mavenCentral()
     mavenLocal()
@@ -128,7 +134,7 @@ project.afterEvaluate {
 
             publications {
                 create<MavenPublication>("mavenJava") {
-                    val kebabName = project.name.replace(Regex("(?<=[a-z])(?=[A-Z])"), "-").lowercase()
+                    val kebabName = baseName.replace(Regex("(?<=[a-z])(?=[A-Z])"), "-").lowercase()
                     artifactId = kebabName
                     pom {
                         name = "NTConfig ${project.name}"

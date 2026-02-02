@@ -4,6 +4,6 @@ plugins {
 
 extra["publish"] = true
 dependencies {
-    api(projects.modules.ntConfigCore)
+    api(projects.modules.core)
     api(libs.bundles.tomlModule)
 }
