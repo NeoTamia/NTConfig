@@ -76,7 +76,7 @@ public class ConfigMerger {
         T result = copy(oldConfig);
 
         // Only update the version field
-        ConfigVersion newVersion = VersionUtils.extractVersion(newConfig);
+        MigrationVersion newVersion = VersionUtils.extractVersion(newConfig);
         if (newVersion != null) {
             VersionUtils.setVersion(result, newVersion);
         }
@@ -102,7 +102,7 @@ public class ConfigMerger {
         }
 
         // Always update version
-        ConfigVersion newVersion = VersionUtils.extractVersion(newConfig);
+        MigrationVersion newVersion = VersionUtils.extractVersion(newConfig);
         if (newVersion != null) {
             VersionUtils.setVersion(result, newVersion);
         }
