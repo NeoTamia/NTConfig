@@ -3,10 +3,12 @@ package re.neotamia.config.main
 import re.neotamia.config.NTConfig
 import re.neotamia.config.annotation.ConfigHeader
 import re.neotamia.config.annotation.ConfigVersion
-import re.neotamia.config.saveable.Saveable
+import re.neotamia.config.migration.core.ConfigMigrationHelpers
+import re.neotamia.config.migration.step.ConfigMigrationStep
+import re.neotamia.config.migration.version.MigrationVersion
 import re.neotamia.config.saveable.SaveableCommented
+import re.neotamia.nightconfig.core.Config
 import re.neotamia.nightconfig.core.file.CommentedFileConfig
-import re.neotamia.nightconfig.core.file.FileConfig
 import re.neotamia.nightconfig.core.serde.DeserializerContext
 import re.neotamia.nightconfig.core.serde.NamingStrategy
 import re.neotamia.nightconfig.core.serde.SerializerContext
@@ -17,6 +19,8 @@ import re.neotamia.nightconfig.json.JsonFormat
 import re.neotamia.nightconfig.toml.TomlFormat
 import re.neotamia.nightconfig.yaml.YamlFormat
 import java.lang.reflect.Type
+import java.nio.file.Files
+import java.nio.file.Path
 
 enum class Test {
     UWU,
@@ -104,6 +108,27 @@ data class SaveableConfig(
     }
 }
 
+data class ServerConfig(
+    @ConfigVersion(defaultVersion = "2")
+    var version: Int = 2,
+    var server: Server = Server()
+)
+
+data class Server(
+    var id: String = "default",
+    var port: Int = 25565
+)
+
+class ServerWrapStep : ConfigMigrationStep {
+    override fun fromVersion(): MigrationVersion = MigrationVersion("1")
+
+    override fun toVersion(): MigrationVersion = MigrationVersion("2")
+
+    override fun migrate(config: Config) {
+        ConfigMigrationHelpers.wrapValue(config, "server", "id")
+    }
+}
+
 fun main() {
     val ntconfig = NTConfig()
     ntconfig.registerFormat(TomlFormat.instance(), "toml")
@@ -121,5 +146,13 @@ fun main() {
     ntconfig.save("saveable.yaml", saveableConf)
     ntconfig.load("saveable.yaml", saveableConf)
 
+    ntconfig.registerMigrationSteps(ServerConfig::class.java, ServerWrapStep())
+    val legacyPath = Path.of("server.json")
+    if (!Files.exists(legacyPath)) {
+        Files.writeString(legacyPath, """{"version":1,"server":"monserver"}""")
+    }
+    val migrated = ntconfig.migrateAndLoad(legacyPath, ServerConfig::class.java, ServerConfig())
+
     println("Loaded SaveableConfig: $saveableConf")
+    println("Loaded ServerConfig: ${migrated.config}")
 }

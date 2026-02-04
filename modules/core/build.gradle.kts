@@ -2,7 +2,7 @@ plugins {
     id("ntconfig-build")
 }
 
-group = "re.neotamia.config"
+extra["publish"] = true
 
 dependencies {
     api(libs.nightConfigCore)

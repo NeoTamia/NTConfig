@@ -1,4 +1,4 @@
-package re.neotamia.config.migration;
+package re.neotamia.config.migration.core;
 
 /**
  * Defines strategies for merging/updating configuration files.
