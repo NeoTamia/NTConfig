@@ -23,6 +23,5 @@ file("modules").listFiles()?.forEach { file ->
     if (file.isDirectory and !file.name.equals("build")) {
         println("Include modules:${file.name}")
         include(":modules:${file.name}")
-        project(":modules:${file.name}").name = "${rootProject.name}-${file.name}"
     }
 }

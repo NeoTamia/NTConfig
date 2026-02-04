@@ -6,16 +6,10 @@ dependencies {
     // Only to run the jar
     implementation(kotlin("stdlib"))
 
-    api(projects.modules.ntConfigCore)
-    api(projects.modules.ntConfigJson)
-    api(projects.modules.ntConfigToml)
-    api(projects.modules.ntConfigYaml)
+    api(projects.modules.core)
+    api(projects.modules.json)
+    api(projects.modules.toml)
+    api(projects.modules.yaml)
 
     implementation(libs.bundles.nightConfigModule)
-}
-
-publishing {
-    publications {
-        remove(named<MavenPublication>("mavenJava").get())
-    }
 }
