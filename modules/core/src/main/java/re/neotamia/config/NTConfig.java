@@ -280,6 +280,88 @@ public class NTConfig {
     public void setNamingStrategy(@NotNull NamingStrategy strategy) {
         this.serdeContext.getSerializer().setNamingStrategy(strategy);
         this.serdeContext.getDeserializer().setNamingStrategy(strategy);
+    /**
+     * Registers migration steps for the given configuration class.
+     *
+     * @param clazz the configuration class
+     * @param steps the migration steps
+     * @param <T>   the configuration type
+     */
+    public <T> void registerMigrationSteps(@NotNull Class<T> clazz, @NotNull ConfigMigrationStep... steps) {
+        ensureMigrationManager();
+        migrationManager.registerMigrationSteps(clazz, steps);
+    }
+
+    /**
+     * Loads a configuration with raw migration and default-merge support.
+     * <p>
+     * The method loads the raw {@link FileConfig}, applies registered raw migration steps,
+     * merges missing values from the provided template, and then deserializes into the target class.
+     *
+     * @param path            the configuration file path
+     * @param clazz           the configuration class
+     * @param currentTemplate the current configuration template with defaults
+     * @param strategy        the merge strategy (null to use default)
+     * @param <T>             the configuration type
+     * @return the migration result containing the loaded/migrated configuration
+     */
+    public <T> ConfigMigrationManager.MigrationResult<T> migrateAndLoad(@NotNull Path path, @NotNull Class<T> clazz, @NotNull T currentTemplate,
+                                                                        @Nullable MergeStrategy strategy) {
+        ensureMigrationManager();
+
+        if (!Files.exists(path)) {
+            try (var fileConfig = save(path, currentTemplate)) {
+                return new ConfigMigrationManager.MigrationResult<>(currentTemplate, false, null,
+                        VersionUtils.extractVersion(currentTemplate), null);
+            }
+        }
+
+        if (strategy == null) {
+            strategy = migrationManager.getDefaultMergeStrategy();
+        }
+
+        FileConfig fileConfig = FileConfig.builder(path).sync().build();
+        fileConfig.load();
+
+        var rawResult = migrationManager.migrateRaw(path, fileConfig, clazz, currentTemplate, strategy, namingStrategy);
+
+        Config templateConfig = Config.inMemory();
+        serializeToConfig(templateConfig, currentTemplate);
+
+        Config mergedForLoad = strategy == MergeStrategy.OVERRIDE ? templateConfig : configTreeMerger.mergeWithDefaults(templateConfig, fileConfig);
+
+        T instance = newInstance(clazz);
+        loadFromMergedConfig(fileConfig, mergedForLoad, instance);
+
+        boolean mergedMissing = false;
+        if (strategy == MergeStrategy.MERGE_MISSING_ONLY) {
+            var mergeResult = configTreeMerger.mergeMissingOnly(fileConfig, templateConfig);
+            mergedMissing = mergeResult.wasMerged();
+        }
+
+        boolean shouldSave = rawResult.wasMigrated() || mergedMissing || strategy == MergeStrategy.OVERRIDE;
+        if (shouldSave) {
+            var saved = strategy == MergeStrategy.OVERRIDE ? save(path, currentTemplate) : save(path, instance);
+            saved.close();
+        }
+
+        return new ConfigMigrationManager.MigrationResult<>(instance, shouldSave,
+                rawResult.oldVersion(), rawResult.newVersion(), rawResult.backupPath());
+    }
+
+    /**
+     * Loads a configuration with raw migration support using the default merge strategy.
+     *
+     * @param path            the configuration file path
+     * @param clazz           the configuration class
+     * @param currentTemplate the current configuration template with defaults
+     * @param <T>             the configuration type
+     * @return the migration result containing the loaded/migrated configuration
+     */
+    public <T> ConfigMigrationManager.MigrationResult<T> migrateAndLoad(@NotNull Path path,
+                                                                         @NotNull Class<T> clazz,
+                                                                         @NotNull T currentTemplate) {
+        return migrateAndLoad(path, clazz, currentTemplate, null);
     }
 
     /**
@@ -296,31 +378,7 @@ public class NTConfig {
      */
     public <T> ConfigMigrationManager.MigrationResult<T> loadWithMigration(@NotNull Path path, @NotNull Class<T> clazz, @NotNull T currentTemplate,
                                                                            MergeStrategy strategy) {
-        ensureMigrationManager();
-
-        // Load the existing configuration
-        T loadedConfig;
-        try {
-            loadedConfig = load(path, clazz);
-        } catch (Exception e) {
-            if (!Files.exists(path)) {
-                try (var fileConfig = save(path, currentTemplate)) {
-                    // Return result indicating no migration was needed (new file created)
-                    return new ConfigMigrationManager.MigrationResult<>(currentTemplate, false, null,
-                            VersionUtils.extractVersion(currentTemplate), null);
-                }
-            }
-            throw e;
-        }
-
-        ConfigMigrationManager.MigrationResult<T> result = migrationManager.migrate(path, loadedConfig, currentTemplate, strategy);
-
-        if (result.wasMigrated()) {
-            var file = save(path, result.config());
-            file.close();
-        }
-
-        return result;
+        return migrateAndLoad(path, clazz, currentTemplate, strategy);
     }
 
     /**
@@ -390,5 +448,36 @@ public class NTConfig {
 
     private void ensureMigrationManager() {
         if (migrationManager == null) migrationManager = new ConfigMigrationManager();
+    }
+
+    private <T> @NotNull T newInstance(@NotNull Class<T> clazz) {
+        try {
+            return clazz.getDeclaredConstructor().newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create instance of class: " + clazz.getName(), e);
+        }
+    }
+
+    private <T> void serializeToConfig(@NotNull Config target, @NotNull T template) throws NTConfigException {
+        try {
+            serdeContext.getSerializer().serializeFields(template, target);
+        } catch (SerdeException e) {
+            throw new NTConfigException(SerdeErrorFormatter.buildSerdeMessage("serialize", template.getClass().getName(), e), e);
+        }
+    }
+
+    private <T> void loadFromMergedConfig(@NotNull FileConfig fileConfig, @NotNull Config mergedConfig, @NotNull T instance) throws NTConfigException {
+        fileConfig.setSerdeContext(this.serdeContext);
+        if (instance instanceof SaveableCommented saveableCommented && fileConfig instanceof CommentedFileConfig commentedFileConfig) {
+            saveableCommented.load(commentedFileConfig);
+        } else if (instance instanceof Saveable saveable) {
+            saveable.load(fileConfig);
+        } else {
+            try {
+                this.serdeContext.getDeserializer().deserializeFields(mergedConfig, instance);
+            } catch (SerdeException e) {
+                throw new NTConfigException(SerdeErrorFormatter.buildSerdeMessage("deserialize", instance.getClass().getName(), e), e);
+            }
+        }
     }
 }
