@@ -1,6 +1,7 @@
-package re.neotamia.config.migration;
+package re.neotamia.config.migration.step;
 
 import org.jetbrains.annotations.NotNull;
+import re.neotamia.config.migration.version.MigrationVersion;
 import re.neotamia.nightconfig.core.Config;
 
 /**
@@ -9,11 +10,15 @@ import re.neotamia.nightconfig.core.Config;
 public interface ConfigMigrationStep {
     /**
      * The version this step migrates from.
+     *
+     * @return the source version
      */
     @NotNull MigrationVersion fromVersion();
 
     /**
      * The version this step migrates to.
+     *
+     * @return the target version
      */
     @NotNull MigrationVersion toVersion();
 
@@ -27,6 +32,8 @@ public interface ConfigMigrationStep {
 
     /**
      * Optional description for logs/debugging.
+     *
+     * @return the description string
      */
     default @NotNull String description() {
         return fromVersion() + " -> " + toVersion();

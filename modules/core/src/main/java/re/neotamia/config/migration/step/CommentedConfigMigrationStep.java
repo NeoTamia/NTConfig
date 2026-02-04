@@ -1,4 +1,4 @@
-package re.neotamia.config.migration;
+package re.neotamia.config.migration.step;
 
 import org.jetbrains.annotations.NotNull;
 import re.neotamia.nightconfig.core.CommentedConfig;

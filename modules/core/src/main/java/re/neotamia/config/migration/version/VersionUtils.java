@@ -1,16 +1,24 @@
-package re.neotamia.config.migration;
+package re.neotamia.config.migration.version;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import re.neotamia.config.annotation.ConfigVersion;
+import re.neotamia.nightconfig.core.Config;
+import re.neotamia.nightconfig.core.serde.NamingStrategy;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Method;
 
 /**
  * Utility class for working with configuration versions.
  */
 public class VersionUtils {
+    /**
+     * Utility class for version helpers.
+     */
+    private VersionUtils() {
+    }
 
     /**
      * Extracts the version from a configuration object.
@@ -45,6 +53,25 @@ public class VersionUtils {
     }
 
     /**
+     * Extracts the version from a raw NightConfig tree using the config class as metadata.
+     *
+     * @param config         the raw config
+     * @param clazz          the configuration class
+     * @param namingStrategy the naming strategy used for serialization (nullable)
+     * @return the extracted version, or null if not found
+     */
+    public static @Nullable MigrationVersion extractVersion(@NotNull Config config,
+                                                            @NotNull Class<?> clazz,
+                                                            @Nullable NamingStrategy namingStrategy) {
+        Field versionField = findVersionField(clazz);
+        if (versionField == null) return null;
+        String key = getVersionKey(versionField, namingStrategy);
+        Object value = config.get(key);
+        if (value == null) return null;
+        return convertToConfigVersion(value);
+    }
+
+    /**
      * Sets the version in a configuration object.
      *
      * @param config  the configuration object
@@ -66,6 +93,26 @@ public class VersionUtils {
         } catch (IllegalAccessException e) {
             throw new RuntimeException("Failed to set version in config", e);
         }
+    }
+
+    /**
+     * Sets the version in a raw NightConfig tree using the config class as metadata.
+     *
+     * @param config         the raw config
+     * @param clazz          the configuration class
+     * @param namingStrategy the naming strategy used for serialization (nullable)
+     * @param version        the version to set
+     */
+    public static void setVersion(@NotNull Config config,
+                                  @NotNull Class<?> clazz,
+                                  @Nullable NamingStrategy namingStrategy,
+                                  @Nullable MigrationVersion version) {
+        if (version == null) return;
+        Field versionField = findVersionField(clazz);
+        if (versionField == null) return;
+        String key = getVersionKey(versionField, namingStrategy);
+        Object converted = convertFromConfigVersion(version, versionField.getType());
+        config.set(key, converted);
     }
 
     /**
@@ -105,6 +152,30 @@ public class VersionUtils {
 
         ConfigVersion annotation = versionField.getAnnotation(ConfigVersion.class);
         return new MigrationVersion(annotation.defaultVersion());
+    }
+
+    private static @NotNull String getVersionKey(@NotNull Field versionField, @Nullable NamingStrategy namingStrategy) {
+        String fieldName = versionField.getName();
+        if (namingStrategy == null) return fieldName;
+        String translated = applyNamingStrategy(namingStrategy, fieldName);
+        return translated == null || translated.isBlank() ? fieldName : translated;
+    }
+
+    private static @Nullable String applyNamingStrategy(@NotNull NamingStrategy namingStrategy, @NotNull String fieldName) {
+        try {
+            Method apply = namingStrategy.getClass().getMethod("apply", String.class);
+            Object value = apply.invoke(namingStrategy, fieldName);
+            return value instanceof String str ? str : fieldName;
+        } catch (ReflectiveOperationException ignored) {
+            // Fallback for alternate method names
+        }
+        try {
+            Method translate = namingStrategy.getClass().getMethod("translate", String.class);
+            Object value = translate.invoke(namingStrategy, fieldName);
+            return value instanceof String str ? str : fieldName;
+        } catch (ReflectiveOperationException ignored) {
+            return fieldName;
+        }
     }
 
     private static @NotNull MigrationVersion convertToConfigVersion(@NotNull Object value) {

@@ -1,4 +1,4 @@
-package re.neotamia.config.migration;
+package re.neotamia.config.migration.core;
 
 /**
  * Policy to apply when a migration step is missing.

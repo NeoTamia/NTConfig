@@ -1,7 +1,9 @@
-package re.neotamia.config.migration;
+package re.neotamia.config.migration.hook;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import re.neotamia.config.migration.core.MergeStrategy;
+import re.neotamia.config.migration.version.MigrationVersion;
 
 import java.nio.file.Path;
 

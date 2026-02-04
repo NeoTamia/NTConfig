@@ -3,13 +3,16 @@ package re.neotamia.config;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import re.neotamia.config.annotation.ConfigHeader;
-import re.neotamia.config.migration.ConfigMigrationManager;
-import re.neotamia.config.migration.MergeStrategy;
-import re.neotamia.config.migration.MigrationHook;
-import re.neotamia.config.migration.VersionUtils;
+import re.neotamia.config.migration.hook.MigrationHook;
+import re.neotamia.config.migration.core.ConfigMigrationManager;
+import re.neotamia.config.migration.core.ConfigTreeMerger;
+import re.neotamia.config.migration.core.MergeStrategy;
+import re.neotamia.config.migration.step.ConfigMigrationStep;
+import re.neotamia.config.migration.version.VersionUtils;
 import re.neotamia.config.registry.FormatRegistry;
 import re.neotamia.config.saveable.Saveable;
 import re.neotamia.config.saveable.SaveableCommented;
+import re.neotamia.nightconfig.core.Config;
 import re.neotamia.nightconfig.core.ConfigFormat;
 import re.neotamia.nightconfig.core.file.CommentedFileConfig;
 import re.neotamia.nightconfig.core.file.FileConfig;
@@ -18,10 +21,15 @@ import re.neotamia.nightconfig.core.serde.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+/**
+ * Main entry point for reading, writing, and migrating configuration files.
+ */
 public class NTConfig {
     private final FormatRegistry formatRegistry = new FormatRegistry();
     private final SerdeContext serdeContext;
+    private final ConfigTreeMerger configTreeMerger = new ConfigTreeMerger();
     private ConfigMigrationManager migrationManager;
+    private @NotNull NamingStrategy namingStrategy;
 
     /**
      * Constructs an NTConfig instance with standard object serializer and deserializer.
@@ -58,6 +66,7 @@ public class NTConfig {
      */
     public NTConfig(@NotNull SerdeContext serdeContext) {
         this.serdeContext = serdeContext;
+        setNamingStrategy(NamingStrategy.KEBAB_CASE);
     }
 
     /**
@@ -280,6 +289,9 @@ public class NTConfig {
     public void setNamingStrategy(@NotNull NamingStrategy strategy) {
         this.serdeContext.getSerializer().setNamingStrategy(strategy);
         this.serdeContext.getDeserializer().setNamingStrategy(strategy);
+        this.namingStrategy = strategy;
+    }
+
     /**
      * Registers migration steps for the given configuration class.
      *
@@ -383,6 +395,12 @@ public class NTConfig {
 
     /**
      * Loads a configuration with migration support using the default merge strategy.
+     *
+     * @param path            the configuration file path
+     * @param clazz           the configuration class
+     * @param currentTemplate the current configuration template with new defaults and version
+     * @param <T>             the configuration type
+     * @return the migration result containing the loaded/migrated configuration
      */
     public <T> ConfigMigrationManager.MigrationResult<T> loadWithMigration(@NotNull Path path, @NotNull Class<T> clazz, @NotNull T currentTemplate) {
         return loadWithMigration(path, clazz, currentTemplate, null);
@@ -391,6 +409,13 @@ public class NTConfig {
     /**
      * Loads and updates a configuration, always saving the result.
      * This is useful for ensuring configuration files are up to date with current templates.
+     *
+     * @param path            the configuration file path
+     * @param clazz           the configuration class
+     * @param currentTemplate the current configuration template with defaults
+     * @param strategy        the merge strategy (null for default)
+     * @param <T>             the configuration type
+     * @return the migration result containing the loaded/migrated configuration
      */
     public <T> ConfigMigrationManager.MigrationResult<T> loadAndUpdate(@NotNull Path path, @NotNull Class<T> clazz, @NotNull T currentTemplate, MergeStrategy strategy) {
         ConfigMigrationManager.MigrationResult<T> result = loadWithMigration(path, clazz, currentTemplate, strategy);
@@ -402,6 +427,12 @@ public class NTConfig {
 
     /**
      * Loads and updates a configuration using the default merge strategy.
+     *
+     * @param path            the configuration file path
+     * @param clazz           the configuration class
+     * @param currentTemplate the current configuration template with defaults
+     * @param <T>             the configuration type
+     * @return the migration result containing the loaded/migrated configuration
      */
     public <T> ConfigMigrationManager.MigrationResult<T> loadAndUpdate(@NotNull Path path, @NotNull Class<T> clazz, @NotNull T currentTemplate) {
         return loadAndUpdate(path, clazz, currentTemplate, null);
@@ -409,6 +440,8 @@ public class NTConfig {
 
     /**
      * Gets the migration manager, creating it if necessary.
+     *
+     * @return the migration manager
      */
     public ConfigMigrationManager getMigrationManager() {
         ensureMigrationManager();
@@ -417,6 +450,8 @@ public class NTConfig {
 
     /**
      * Sets a custom migration manager.
+     *
+     * @param migrationManager the migration manager to use
      */
     public void setMigrationManager(ConfigMigrationManager migrationManager) {
         this.migrationManager = migrationManager;
@@ -424,6 +459,8 @@ public class NTConfig {
 
     /**
      * Adds a migration hook.
+     *
+     * @param hook the hook to add
      */
     public void addMigrationHook(MigrationHook hook) {
         ensureMigrationManager();
@@ -432,6 +469,8 @@ public class NTConfig {
 
     /**
      * Sets the default merge strategy for migrations.
+     *
+     * @param strategy the strategy to use
      */
     public void setDefaultMergeStrategy(MergeStrategy strategy) {
         ensureMigrationManager();
@@ -440,6 +479,8 @@ public class NTConfig {
 
     /**
      * Gets the default merge strategy for migrations.
+     *
+     * @return the default merge strategy
      */
     public MergeStrategy getDefaultMergeStrategy() {
         ensureMigrationManager();

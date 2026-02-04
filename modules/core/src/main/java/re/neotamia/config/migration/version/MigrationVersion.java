@@ -1,4 +1,4 @@
-package re.neotamia.config.migration;
+package re.neotamia.config.migration.version;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,6 +16,11 @@ public class MigrationVersion implements Comparable<MigrationVersion> {
     private final int patch;
     private final boolean isSemanticVersion;
 
+    /**
+     * Creates a version from a string (integer or semantic).
+     *
+     * @param version the version string
+     */
     public MigrationVersion(@NotNull String version) {
         this.version = Objects.requireNonNull(version, "Version cannot be null");
 
@@ -37,6 +42,11 @@ public class MigrationVersion implements Comparable<MigrationVersion> {
         }
     }
 
+    /**
+     * Creates a version from an integer major component.
+     *
+     * @param version the major version
+     */
     public MigrationVersion(int version) {
         this.version = String.valueOf(version);
         this.major = version;
@@ -45,6 +55,13 @@ public class MigrationVersion implements Comparable<MigrationVersion> {
         this.isSemanticVersion = false;
     }
 
+    /**
+     * Creates a semantic version from components.
+     *
+     * @param major the major version
+     * @param minor the minor version
+     * @param patch the patch version
+     */
     public MigrationVersion(int major, int minor, int patch) {
         this.version = major + "." + minor + "." + patch;
         this.major = major;
@@ -53,22 +70,47 @@ public class MigrationVersion implements Comparable<MigrationVersion> {
         this.isSemanticVersion = true;
     }
 
+    /**
+     * Returns the original version string.
+     *
+     * @return the version string
+     */
     public @NotNull String getVersion() {
         return version;
     }
 
+    /**
+     * Returns the major version component.
+     *
+     * @return the major version
+     */
     public int getMajor() {
         return major;
     }
 
+    /**
+     * Returns the minor version component.
+     *
+     * @return the minor version
+     */
     public int getMinor() {
         return minor;
     }
 
+    /**
+     * Returns the patch version component.
+     *
+     * @return the patch version
+     */
     public int getPatch() {
         return patch;
     }
 
+    /**
+     * Returns whether this version was parsed as semantic (major.minor.patch).
+     *
+     * @return true if semantic
+     */
     public boolean isSemanticVersion() {
         return isSemanticVersion;
     }
@@ -84,14 +126,32 @@ public class MigrationVersion implements Comparable<MigrationVersion> {
         return Integer.compare(this.patch, other.patch);
     }
 
+    /**
+     * Returns whether this version is newer than another.
+     *
+     * @param other the version to compare to
+     * @return true if newer
+     */
     public boolean isNewerThan(@NotNull MigrationVersion other) {
         return this.compareTo(other) > 0;
     }
 
+    /**
+     * Returns whether this version is older than another.
+     *
+     * @param other the version to compare to
+     * @return true if older
+     */
     public boolean isOlderThan(@NotNull MigrationVersion other) {
         return this.compareTo(other) < 0;
     }
 
+    /**
+     * Returns whether this version equals another.
+     *
+     * @param other the version to compare to
+     * @return true if equal
+     */
     public boolean isEqualTo(@NotNull MigrationVersion other) {
         return this.compareTo(other) == 0;
     }

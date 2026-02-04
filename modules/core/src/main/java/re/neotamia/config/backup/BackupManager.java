@@ -1,7 +1,8 @@
-package re.neotamia.config.migration;
+package re.neotamia.config.backup;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import re.neotamia.config.migration.version.MigrationVersion;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -12,10 +13,18 @@ import java.time.format.DateTimeFormatter;
 
 /**
  * Manages backup creation for configuration files during migration.
+ *
+ * @param backupDirectory the directory where backups are stored
+ * @param enabled         whether backups are enabled
  */
 public record BackupManager(@NotNull Path backupDirectory, boolean enabled) {
     private static final DateTimeFormatter BACKUP_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
 
+    /**
+     * Creates a backup manager with backups enabled.
+     *
+     * @param backupDirectory the directory where backups are stored
+     */
     public BackupManager(@NotNull Path backupDirectory) {
         this(backupDirectory, true);
     }
@@ -48,12 +57,14 @@ public record BackupManager(@NotNull Path backupDirectory, boolean enabled) {
 
         String originalFileName = configPath.getFileName().toString();
         String timestamp = LocalDateTime.now().format(BACKUP_DATE_FORMAT);
+        String baseName = getFileNameWithoutExtension(originalFileName);
+        String extension = getFileExtension(originalFileName);
 
-        StringBuilder sb = new StringBuilder(getFileExtension(originalFileName));
+        StringBuilder sb = new StringBuilder(baseName);
         if (suffix != null)
             sb.append("_").append(suffix);
         sb.append("_").append(timestamp);
-        sb.append(getFileExtension(originalFileName));
+        sb.append(extension);
 
         String backupFileName = sb.toString();
         Path backupPath = backupDirectory.resolve(backupFileName);
@@ -64,6 +75,10 @@ public record BackupManager(@NotNull Path backupDirectory, boolean enabled) {
 
     /**
      * Simple backup with just a timestamp.
+     *
+     * @param configPath the path to the configuration file to backup
+     * @return the path to the created backup file, or null if backups are disabled
+     * @throws IOException if the backup creation fails
      */
     public Path createBackup(@NotNull Path configPath) throws IOException {
         return createBackup(configPath, (MigrationVersion) null);
