@@ -49,11 +49,13 @@ public record BackupManager(@NotNull Path backupDirectory, boolean enabled) {
         String originalFileName = configPath.getFileName().toString();
         String timestamp = LocalDateTime.now().format(BACKUP_DATE_FORMAT);
 
-        String backupFileName = getFileNameWithoutExtension(originalFileName)
-                + "_" + suffix
-                + "_" + timestamp
-                + getFileExtension(originalFileName);
+        StringBuilder sb = new StringBuilder(getFileExtension(originalFileName));
+        if (suffix != null)
+            sb.append("_").append(suffix);
+        sb.append("_").append(timestamp);
+        sb.append(getFileExtension(originalFileName));
 
+        String backupFileName = sb.toString();
         Path backupPath = backupDirectory.resolve(backupFileName);
         Files.copy(configPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
 
