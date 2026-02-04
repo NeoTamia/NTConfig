@@ -7,6 +7,7 @@ import re.neotamia.config.migration.core.ConfigMigrationHelpers
 import re.neotamia.config.migration.step.ConfigMigrationStep
 import re.neotamia.config.migration.version.MigrationVersion
 import re.neotamia.config.saveable.SaveableCommented
+import re.neotamia.nightconfig.core.Config
 import re.neotamia.nightconfig.core.file.CommentedFileConfig
 import re.neotamia.nightconfig.core.serde.DeserializerContext
 import re.neotamia.nightconfig.core.serde.NamingStrategy
@@ -20,7 +21,6 @@ import re.neotamia.nightconfig.yaml.YamlFormat
 import java.lang.reflect.Type
 import java.nio.file.Files
 import java.nio.file.Path
-import re.neotamia.nightconfig.core.Config
 
 enum class Test {
     UWU,
