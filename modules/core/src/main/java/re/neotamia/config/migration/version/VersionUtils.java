@@ -7,7 +7,6 @@ import re.neotamia.nightconfig.core.Config;
 import re.neotamia.nightconfig.core.serde.NamingStrategy;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
