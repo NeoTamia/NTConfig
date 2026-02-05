@@ -28,7 +28,7 @@ public class NTConfig {
     private final FormatRegistry formatRegistry = new FormatRegistry();
     private final SerdeContext serdeContext;
     private final ConfigTreeMerger configTreeMerger = new ConfigTreeMerger();
-    private ConfigMigrationManager migrationManager;
+    private ConfigMigrationManager migrationManager = new ConfigMigrationManager();
     private @NotNull NamingStrategy namingStrategy;
 
     /**
@@ -300,7 +300,6 @@ public class NTConfig {
      * @param <T>   the configuration type
      */
     public <T> void registerMigrationSteps(@NotNull Class<T> clazz, @NotNull ConfigMigrationStep... steps) {
-        ensureMigrationManager();
         migrationManager.registerMigrationSteps(clazz, steps);
     }
 
@@ -319,8 +318,6 @@ public class NTConfig {
      */
     public <T> ConfigMigrationManager.MigrationResult<T> migrateAndLoad(@NotNull Path path, @NotNull Class<T> clazz, @NotNull T currentTemplate,
                                                                         @Nullable MergeStrategy strategy) {
-        ensureMigrationManager();
-
         if (!Files.exists(path)) {
             try (var fileConfig = save(path, currentTemplate)) {
                 return new ConfigMigrationManager.MigrationResult<>(currentTemplate, false, null,
@@ -328,12 +325,11 @@ public class NTConfig {
             }
         }
 
-        if (strategy == null) {
-            strategy = migrationManager.getDefaultMergeStrategy();
-        }
+        if (strategy == null) strategy = migrationManager.getDefaultMergeStrategy();
 
         FileConfig fileConfig = FileConfig.builder(path).sync().build();
         fileConfig.load();
+        fileConfig.close();
 
         var rawResult = migrationManager.migrateRaw(path, fileConfig, clazz, currentTemplate, strategy, namingStrategy);
 
@@ -357,8 +353,7 @@ public class NTConfig {
             saved.close();
         }
 
-        return new ConfigMigrationManager.MigrationResult<>(instance, shouldSave,
-                rawResult.oldVersion(), rawResult.newVersion(), rawResult.backupPath());
+        return new ConfigMigrationManager.MigrationResult<>(instance, shouldSave, rawResult.oldVersion(), rawResult.newVersion(), rawResult.backupPath());
     }
 
     /**
@@ -370,40 +365,8 @@ public class NTConfig {
      * @param <T>             the configuration type
      * @return the migration result containing the loaded/migrated configuration
      */
-    public <T> ConfigMigrationManager.MigrationResult<T> migrateAndLoad(@NotNull Path path,
-                                                                         @NotNull Class<T> clazz,
-                                                                         @NotNull T currentTemplate) {
+    public <T> ConfigMigrationManager.MigrationResult<T> migrateAndLoad(@NotNull Path path, @NotNull Class<T> clazz, @NotNull T currentTemplate) {
         return migrateAndLoad(path, clazz, currentTemplate, null);
-    }
-
-    /**
-     * Loads a configuration with migration support.
-     * If the loaded configuration version differs from the current template version,
-     * migration will be performed according to the specified strategy.
-     *
-     * @param path            the configuration file path
-     * @param clazz           the configuration class
-     * @param currentTemplate the current configuration template with new defaults and version
-     * @param strategy        the merge strategy to use (null for default)
-     * @param <T>             the configuration type
-     * @return the migration result containing the loaded/migrated configuration
-     */
-    public <T> ConfigMigrationManager.MigrationResult<T> loadWithMigration(@NotNull Path path, @NotNull Class<T> clazz, @NotNull T currentTemplate,
-                                                                           MergeStrategy strategy) {
-        return migrateAndLoad(path, clazz, currentTemplate, strategy);
-    }
-
-    /**
-     * Loads a configuration with migration support using the default merge strategy.
-     *
-     * @param path            the configuration file path
-     * @param clazz           the configuration class
-     * @param currentTemplate the current configuration template with new defaults and version
-     * @param <T>             the configuration type
-     * @return the migration result containing the loaded/migrated configuration
-     */
-    public <T> ConfigMigrationManager.MigrationResult<T> loadWithMigration(@NotNull Path path, @NotNull Class<T> clazz, @NotNull T currentTemplate) {
-        return loadWithMigration(path, clazz, currentTemplate, null);
     }
 
     /**
@@ -418,7 +381,7 @@ public class NTConfig {
      * @return the migration result containing the loaded/migrated configuration
      */
     public <T> ConfigMigrationManager.MigrationResult<T> loadAndUpdate(@NotNull Path path, @NotNull Class<T> clazz, @NotNull T currentTemplate, MergeStrategy strategy) {
-        ConfigMigrationManager.MigrationResult<T> result = loadWithMigration(path, clazz, currentTemplate, strategy);
+        ConfigMigrationManager.MigrationResult<T> result = migrateAndLoad(path, clazz, currentTemplate, strategy);
         // Always save to ensure a file is up to date (comments, formatting, etc.)
         var fileConfig = save(path, result.config());
         fileConfig.close();
@@ -444,7 +407,6 @@ public class NTConfig {
      * @return the migration manager
      */
     public ConfigMigrationManager getMigrationManager() {
-        ensureMigrationManager();
         return migrationManager;
     }
 
@@ -463,7 +425,6 @@ public class NTConfig {
      * @param hook the hook to add
      */
     public void addMigrationHook(MigrationHook hook) {
-        ensureMigrationManager();
         migrationManager.addHook(hook);
     }
 
@@ -473,7 +434,6 @@ public class NTConfig {
      * @param strategy the strategy to use
      */
     public void setDefaultMergeStrategy(MergeStrategy strategy) {
-        ensureMigrationManager();
         migrationManager.setDefaultMergeStrategy(strategy);
     }
 
@@ -483,12 +443,7 @@ public class NTConfig {
      * @return the default merge strategy
      */
     public MergeStrategy getDefaultMergeStrategy() {
-        ensureMigrationManager();
         return migrationManager.getDefaultMergeStrategy();
-    }
-
-    private void ensureMigrationManager() {
-        if (migrationManager == null) migrationManager = new ConfigMigrationManager();
     }
 
     private <T> @NotNull T newInstance(@NotNull Class<T> clazz) {

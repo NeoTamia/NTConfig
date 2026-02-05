@@ -3,10 +3,13 @@ package re.neotamia.config.main
 import re.neotamia.config.NTConfig
 import re.neotamia.config.annotation.ConfigHeader
 import re.neotamia.config.annotation.ConfigVersion
+import re.neotamia.config.json.registerJson
 import re.neotamia.config.migration.core.ConfigMigrationHelpers
 import re.neotamia.config.migration.step.ConfigMigrationStep
 import re.neotamia.config.migration.version.MigrationVersion
 import re.neotamia.config.saveable.SaveableCommented
+import re.neotamia.config.toml.registerToml
+import re.neotamia.config.yaml.registerYaml
 import re.neotamia.nightconfig.core.Config
 import re.neotamia.nightconfig.core.file.CommentedFileConfig
 import re.neotamia.nightconfig.core.serde.DeserializerContext
@@ -131,10 +134,9 @@ class ServerWrapStep : ConfigMigrationStep {
 
 fun main() {
     val ntconfig = NTConfig()
-    ntconfig.registerFormat(TomlFormat.instance(), "toml")
-    ntconfig.registerFormat(YamlFormat.defaultInstance(), "yaml", "yml")
-    ntconfig.registerFormat(JsonFormat.fancyInstance(), "json")
-    ntconfig.setNamingStrategy(NamingStrategy.KEBAB_CASE)
+    ntconfig.registerToml()
+    ntconfig.registerYaml()
+    ntconfig.registerJson()
     ntconfig.registerTypeAdapter(ResourceLocationTypeAdapter())
 
     // add registerConfig to keep it in memory or use singleton?
