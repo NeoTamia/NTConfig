@@ -149,12 +149,8 @@ public class ConfigMigrationManager {
      * @param <T>            the configuration type
      * @return the raw migration result
      */
-    public <T> @NotNull RawMigrationResult migrateRaw(@NotNull Path configPath,
-                                                      @NotNull Config rawConfig,
-                                                      @NotNull Class<T> configClass,
-                                                      @NotNull T currentTemplate,
-                                                      @Nullable MergeStrategy strategy,
-                                                      @Nullable NamingStrategy namingStrategy) {
+    public <T> @NotNull RawMigrationResult migrateRaw(@NotNull Path configPath, @NotNull Config rawConfig, @NotNull Class<T> configClass,
+                                                      @NotNull T currentTemplate, @Nullable MergeStrategy strategy, @Nullable NamingStrategy namingStrategy) {
         if (strategy == null) {
             strategy = defaultMergeStrategy;
         }

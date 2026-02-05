@@ -7,18 +7,20 @@ import re.neotamia.nightconfig.core.Config;
 import re.neotamia.nightconfig.core.serde.NamingStrategy;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Utility class for working with configuration versions.
  */
 public class VersionUtils {
+    private static final ConcurrentHashMap<Class<?>, Optional<Field>> VERSION_FIELDS = new ConcurrentHashMap<>();
     /**
      * Utility class for version helpers.
      */
-    private VersionUtils() {
-    }
+    private VersionUtils() {}
 
     /**
      * Extracts the version from a configuration object.
@@ -60,12 +62,10 @@ public class VersionUtils {
      * @param namingStrategy the naming strategy used for serialization (nullable)
      * @return the extracted version, or null if not found
      */
-    public static @Nullable MigrationVersion extractVersion(@NotNull Config config,
-                                                            @NotNull Class<?> clazz,
-                                                            @Nullable NamingStrategy namingStrategy) {
+    public static @Nullable MigrationVersion extractVersion(@NotNull Config config, @NotNull Class<?> clazz, @Nullable NamingStrategy namingStrategy) {
         Field versionField = findVersionField(clazz);
         if (versionField == null) return null;
-        String key = getVersionKey(versionField, namingStrategy);
+        String key = versionField.getName();
         Object value = config.get(key);
         if (value == null) return null;
         return convertToConfigVersion(value);
@@ -103,14 +103,12 @@ public class VersionUtils {
      * @param namingStrategy the naming strategy used for serialization (nullable)
      * @param version        the version to set
      */
-    public static void setVersion(@NotNull Config config,
-                                  @NotNull Class<?> clazz,
-                                  @Nullable NamingStrategy namingStrategy,
+    public static void setVersion(@NotNull Config config, @NotNull Class<?> clazz, @Nullable NamingStrategy namingStrategy,
                                   @Nullable MigrationVersion version) {
         if (version == null) return;
         Field versionField = findVersionField(clazz);
         if (versionField == null) return;
-        String key = getVersionKey(versionField, namingStrategy);
+        String key = versionField.getName();
         Object converted = convertFromConfigVersion(version, versionField.getType());
         config.set(key, converted);
     }
@@ -122,12 +120,16 @@ public class VersionUtils {
      * @return the version field, or null if not found
      */
     public static @Nullable Field findVersionField(@NotNull Class<?> clazz) {
-        for (Field field : clazz.getDeclaredFields()) {
-            if (Modifier.isStatic(field.getModifiers())) continue;
-            if (field.isAnnotationPresent(ConfigVersion.class))
-                return field;
-        }
-        return null;
+        Optional<Field> cached = VERSION_FIELDS.computeIfAbsent(clazz, key -> {
+            for (Field field : key.getDeclaredFields()) {
+                if (Modifier.isStatic(field.getModifiers())) continue;
+                if (field.isAnnotationPresent(ConfigVersion.class)) {
+                    return Optional.of(field);
+                }
+            }
+            return Optional.empty();
+        });
+        return cached.orElse(null);
     }
 
     /**
@@ -152,30 +154,6 @@ public class VersionUtils {
 
         ConfigVersion annotation = versionField.getAnnotation(ConfigVersion.class);
         return new MigrationVersion(annotation.defaultVersion());
-    }
-
-    private static @NotNull String getVersionKey(@NotNull Field versionField, @Nullable NamingStrategy namingStrategy) {
-        String fieldName = versionField.getName();
-        if (namingStrategy == null) return fieldName;
-        String translated = applyNamingStrategy(namingStrategy, fieldName);
-        return translated == null || translated.isBlank() ? fieldName : translated;
-    }
-
-    private static @Nullable String applyNamingStrategy(@NotNull NamingStrategy namingStrategy, @NotNull String fieldName) {
-        try {
-            Method apply = namingStrategy.getClass().getMethod("apply", String.class);
-            Object value = apply.invoke(namingStrategy, fieldName);
-            return value instanceof String str ? str : fieldName;
-        } catch (ReflectiveOperationException ignored) {
-            // Fallback for alternate method names
-        }
-        try {
-            Method translate = namingStrategy.getClass().getMethod("translate", String.class);
-            Object value = translate.invoke(namingStrategy, fieldName);
-            return value instanceof String str ? str : fieldName;
-        } catch (ReflectiveOperationException ignored) {
-            return fieldName;
-        }
     }
 
     private static @NotNull MigrationVersion convertToConfigVersion(@NotNull Object value) {

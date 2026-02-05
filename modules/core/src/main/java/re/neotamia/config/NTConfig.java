@@ -174,10 +174,11 @@ public class NTConfig {
      * @throws RuntimeException if any errors occur during the deserialization process
      */
     public <T> @Nullable T load(@NotNull Path path, @NotNull T instance) throws RuntimeException {
-        FileConfig fileConfig = FileConfig.builder(path).sync().build();
-        fileConfig.load();
-        loadFromConfig(fileConfig, instance);
-        return instance;
+        try (FileConfig fileConfig = FileConfig.builder(path).sync().build()) {
+            fileConfig.load();
+            loadFromConfig(fileConfig, instance);
+            return instance;
+        }
     }
 
     /**
@@ -192,8 +193,9 @@ public class NTConfig {
      * @throws RuntimeException if the instance of the class cannot be created, or any errors occur during the deserialization process
      */
     public <T> @NotNull T load(@NotNull Path path, @NotNull Class<T> clazz) throws RuntimeException {
-        FileConfig fileConfig = FileConfig.builder(path).sync().build();
-        return load(fileConfig, clazz);
+        try (FileConfig fileConfig = FileConfig.builder(path).sync().build()) {
+            return load(fileConfig, clazz);
+        }
     }
 
     /**
