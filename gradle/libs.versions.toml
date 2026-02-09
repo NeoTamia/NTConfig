@@ -3,9 +3,9 @@
 # https://docs.gradle.org/current/userguide/platforms.html#sub::toml-dependencies-format
 
 [versions]
-kotlin = "2.3.0"
+kotlin = "2.3.10"
 shadow = "9.3.1"
-spotless = "8.2.0"
+spotless = "8.2.1"
 
 nightConfig = "3.10.5"
 
