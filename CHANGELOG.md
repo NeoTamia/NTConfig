@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.1.1](https://github.com/NeoTamia/NTConfig/compare/v0.1.0...v0.1.1) (2026-02-08)
+
+
+### ♻️ Code Refactoring
+
+* Cleanup imports ([304e504](https://github.com/NeoTamia/NTConfig/commit/304e504e2fb27545357cbf5ce5d6e5f2bc5a5b83))
+* **core:** Optimize version handling and format registration ([f2cb68c](https://github.com/NeoTamia/NTConfig/commit/f2cb68cff7830985435abbfe41dc5acce0eb2bda))
+* **core:** Simplify migration manager initialization and remove redundant methods ([7b80d4f](https://github.com/NeoTamia/NTConfig/commit/7b80d4f6b68aea605d50d4c4fc8911e944a437c0))
+
+
+### 🔧 Build System
+
+* **deps:** Update dependency com.diffplug.spotless:spotless-plugin-gradle to v8.2.1 ([#20](https://github.com/NeoTamia/NTConfig/issues/20)) ([907252d](https://github.com/NeoTamia/NTConfig/commit/907252dba6bffddeba4f104fde09f6ad75b1593a))
+* **deps:** Update dependency org.jetbrains.kotlin.jvm to v2.3.10 ([#24](https://github.com/NeoTamia/NTConfig/issues/24)) ([f974859](https://github.com/NeoTamia/NTConfig/commit/f974859f55f09f55daaa455804707bc40f4d2677))
+* **deps:** Update gradle to v9.3.1 ([#21](https://github.com/NeoTamia/NTConfig/issues/21)) ([0330efa](https://github.com/NeoTamia/NTConfig/commit/0330efaf52c12f1283a8de70f1e0dae22f5b9b2c))
+
 ## [0.1.0](https://github.com/NeoTamia/NTConfig/compare/v0.0.1...v0.1.0) (2026-02-04)
 
 
