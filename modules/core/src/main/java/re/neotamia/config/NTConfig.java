@@ -7,7 +7,7 @@ import re.neotamia.config.migration.hook.MigrationHook;
 import re.neotamia.config.migration.core.ConfigMigrationManager;
 import re.neotamia.config.migration.core.ConfigTreeMerger;
 import re.neotamia.config.migration.core.MergeStrategy;
-import re.neotamia.config.migration.step.ConfigMigrationStep;
+import re.neotamia.config.migration.step.IConfigMigrationStep;
 import re.neotamia.config.migration.version.VersionUtils;
 import re.neotamia.config.registry.FormatRegistry;
 import re.neotamia.config.saveable.Saveable;
@@ -301,7 +301,7 @@ public class NTConfig {
      * @param steps the migration steps
      * @param <T>   the configuration type
      */
-    public <T> void registerMigrationSteps(@NotNull Class<T> clazz, @NotNull ConfigMigrationStep... steps) {
+    public <T> void registerMigrationSteps(@NotNull Class<T> clazz, @NotNull IConfigMigrationStep... steps) {
         migrationManager.registerMigrationSteps(clazz, steps);
     }
 

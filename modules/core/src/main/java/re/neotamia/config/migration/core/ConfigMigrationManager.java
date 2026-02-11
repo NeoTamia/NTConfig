@@ -4,7 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import re.neotamia.config.backup.BackupManager;
 import re.neotamia.config.migration.hook.MigrationHook;
-import re.neotamia.config.migration.step.ConfigMigrationStep;
+import re.neotamia.config.migration.step.IConfigMigrationStep;
 import re.neotamia.config.migration.version.MigrationVersion;
 import re.neotamia.config.migration.version.VersionUtils;
 import re.neotamia.config.registry.ConfigMigrationRegistry;
@@ -53,7 +53,7 @@ public class ConfigMigrationManager {
      * @param steps the migration steps
      * @param <T>   the configuration type
      */
-    public <T> void registerMigrationSteps(@NotNull Class<T> clazz, @NotNull ConfigMigrationStep... steps) {
+    public <T> void registerMigrationSteps(@NotNull Class<T> clazz, @NotNull IConfigMigrationStep... steps) {
         migrationRegistry.register(clazz, steps);
     }
 
@@ -185,7 +185,7 @@ public class ConfigMigrationManager {
             return new RawMigrationResult(rawConfig, false, loadedVersion, currentVersion, null);
         }
 
-        List<ConfigMigrationStep> steps = migrationRegistry.getSteps(configClass);
+        List<IConfigMigrationStep> steps = migrationRegistry.getSteps(configClass);
         if (steps.isEmpty()) {
             if (loadedVersion.isEqualTo(currentVersion)) {
                 final MigrationVersion finalCurrentVersion = currentVersion;
@@ -240,7 +240,7 @@ public class ConfigMigrationManager {
 
             MigrationVersion versionCursor = loadedVersion;
             boolean migrated = false;
-            for (ConfigMigrationStep step : plan.steps()) {
+            for (IConfigMigrationStep step : plan.steps()) {
                 step.migrate(rawConfig);
                 migrated = true;
                 versionCursor = step.toVersion();
@@ -277,22 +277,22 @@ public class ConfigMigrationManager {
         void accept(MigrationHook hook);
     }
 
-    private @NotNull MigrationPlan buildPlan(@NotNull List<ConfigMigrationStep> steps, @NotNull MigrationVersion from, @NotNull MigrationVersion target) {
+    private @NotNull MigrationPlan buildPlan(@NotNull List<IConfigMigrationStep> steps, @NotNull MigrationVersion from, @NotNull MigrationVersion target) {
         if (from.isNewerThan(target)) {
             throw new IllegalArgumentException("Cannot migrate from newer version " + from + " to older version " + target);
         }
-        Map<MigrationVersion, ConfigMigrationStep> byFrom = new HashMap<>();
-        for (ConfigMigrationStep step : steps) {
-            ConfigMigrationStep existing = byFrom.put(step.fromVersion(), step);
+        Map<MigrationVersion, IConfigMigrationStep> byFrom = new HashMap<>();
+        for (IConfigMigrationStep step : steps) {
+            IConfigMigrationStep existing = byFrom.put(step.fromVersion(), step);
             if (existing != null) {
                 throw new IllegalArgumentException("Duplicate migration step for version " + step.fromVersion());
             }
         }
-        List<ConfigMigrationStep> plan = new ArrayList<>();
+        List<IConfigMigrationStep> plan = new ArrayList<>();
         MigrationVersion cursor = from;
         boolean reachedTarget = cursor.isEqualTo(target);
         while (!reachedTarget) {
-            ConfigMigrationStep step = byFrom.get(cursor);
+            IConfigMigrationStep step = byFrom.get(cursor);
             if (step == null) break;
             if (!step.toVersion().isNewerThan(cursor)) {
                 throw new IllegalArgumentException("Migration step " + step.description() + " does not advance version");
@@ -304,7 +304,7 @@ public class ConfigMigrationManager {
         return new MigrationPlan(plan, cursor, reachedTarget);
     }
 
-    private record MigrationPlan(@NotNull List<ConfigMigrationStep> steps, @NotNull MigrationVersion finalVersion, boolean reachedTarget) {}
+    private record MigrationPlan(@NotNull List<IConfigMigrationStep> steps, @NotNull MigrationVersion finalVersion, boolean reachedTarget) {}
 
     /**
      * Result of a migration operation.
