@@ -1,26 +1,29 @@
 package re.neotamia.config.migration.step;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import re.neotamia.nightconfig.core.CommentedConfig;
-import re.neotamia.nightconfig.core.Config;
+
+import java.util.function.Consumer;
 
 /**
- * Migration step that operates on {@link CommentedConfig} to allow comment updates.
+ * Migration step backed by a {@link Consumer} that mutates a {@link CommentedConfig}.
  */
-public interface CommentedConfigMigrationStep extends ConfigMigrationStep {
-    /**
-     * Applies the migration to the provided commented config.
-     *
-     * @param config the commented config to mutate
-     * @throws Exception if the migration fails
-     */
-    void migrate(@NotNull CommentedConfig config) throws Exception;
+public class CommentedConfigMigrationStep extends AbstractConfigMigrationStep implements ICommentedConfigMigrationStep {
+    private final Consumer<CommentedConfig> migrateFunction;
+
+    public CommentedConfigMigrationStep(@NotNull String from, @NotNull String to, @NotNull Consumer<CommentedConfig> migrateFunction) {
+        this(from, to, migrateFunction, null);
+    }
+
+    public CommentedConfigMigrationStep(@NotNull String from, @NotNull String to, @NotNull Consumer<CommentedConfig> migrateFunction,
+                                        @Nullable String description) {
+        super(from, to, description);
+        this.migrateFunction = migrateFunction;
+    }
 
     @Override
-    default void migrate(@NotNull Config config) throws Exception {
-        if (!(config instanceof CommentedConfig commentedConfig)) {
-            throw new IllegalArgumentException("CommentedConfigMigrationStep requires a CommentedConfig");
-        }
-        migrate(commentedConfig);
+    public void migrate(@NotNull CommentedConfig config) throws Exception {
+        migrateFunction.accept(config);
     }
 }

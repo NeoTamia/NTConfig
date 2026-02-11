@@ -6,6 +6,7 @@ import re.neotamia.config.annotation.ConfigVersion
 import re.neotamia.config.json.registerJson
 import re.neotamia.config.migration.core.ConfigMigrationHelpers
 import re.neotamia.config.migration.step.ConfigMigrationStep
+import re.neotamia.config.migration.step.IConfigMigrationStep
 import re.neotamia.config.migration.version.MigrationVersion
 import re.neotamia.config.saveable.SaveableCommented
 import re.neotamia.config.toml.registerToml
@@ -13,14 +14,10 @@ import re.neotamia.config.yaml.registerYaml
 import re.neotamia.nightconfig.core.Config
 import re.neotamia.nightconfig.core.file.CommentedFileConfig
 import re.neotamia.nightconfig.core.serde.DeserializerContext
-import re.neotamia.nightconfig.core.serde.NamingStrategy
 import re.neotamia.nightconfig.core.serde.SerializerContext
 import re.neotamia.nightconfig.core.serde.TypeAdapter
 import re.neotamia.nightconfig.core.serde.annotations.SerdeComment
 import re.neotamia.nightconfig.core.serde.annotations.SerdeConfig
-import re.neotamia.nightconfig.json.JsonFormat
-import re.neotamia.nightconfig.toml.TomlFormat
-import re.neotamia.nightconfig.yaml.YamlFormat
 import java.lang.reflect.Type
 import java.nio.file.Files
 import java.nio.file.Path
@@ -122,7 +119,7 @@ data class Server(
     var port: Int = 25565
 )
 
-class ServerWrapStep : ConfigMigrationStep {
+class ServerWrapStep : IConfigMigrationStep {
     override fun fromVersion(): MigrationVersion = MigrationVersion("1")
 
     override fun toVersion(): MigrationVersion = MigrationVersion("2")
@@ -149,6 +146,12 @@ fun main() {
     ntconfig.load("saveable.yaml", saveableConf)
 
     ntconfig.registerMigrationSteps(ServerConfig::class.java, ServerWrapStep())
+    ntconfig.registerMigrationSteps(
+        ServerConfig::class.java,
+        ConfigMigrationStep("1", "2") { config ->
+            ConfigMigrationHelpers.wrapValue(config, "server", "id")
+        }
+    )
     val legacyPath = Path.of("server.json")
     if (!Files.exists(legacyPath)) {
         Files.writeString(legacyPath, """{"version":1,"server":"monserver"}""")

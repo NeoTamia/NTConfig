@@ -9,8 +9,9 @@ import re.neotamia.config.migration.core.ConfigMigrationHelpers
 import re.neotamia.config.migration.core.ConfigMigrationManager
 import re.neotamia.config.migration.core.MergeStrategy
 import re.neotamia.config.migration.core.MissingStepPolicy
-import re.neotamia.config.migration.step.CommentedConfigMigrationStep
 import re.neotamia.config.migration.step.ConfigMigrationStep
+import re.neotamia.config.migration.step.ICommentedConfigMigrationStep
+import re.neotamia.config.migration.step.IConfigMigrationStep
 import re.neotamia.config.migration.version.MigrationVersion
 import re.neotamia.nightconfig.core.CommentedConfig
 import re.neotamia.nightconfig.core.Config
@@ -44,7 +45,7 @@ class RawConfigMigrationTest {
         var port: Int = 25565
     }
 
-    class ServerWrapStep : ConfigMigrationStep {
+    class ServerWrapStep : IConfigMigrationStep {
         override fun fromVersion(): MigrationVersion = MigrationVersion("1")
 
         override fun toVersion(): MigrationVersion = MigrationVersion("2")
@@ -69,7 +70,7 @@ class RawConfigMigrationTest {
         var newName: String = "default"
     }
 
-    class RenameStep : ConfigMigrationStep {
+    class RenameStep : IConfigMigrationStep {
         override fun fromVersion(): MigrationVersion = MigrationVersion("1")
 
         override fun toVersion(): MigrationVersion = MigrationVersion("2")
@@ -87,7 +88,7 @@ class RawConfigMigrationTest {
         var flag: Boolean = false
     }
 
-    class StepOne : ConfigMigrationStep {
+    class StepOne : IConfigMigrationStep {
         override fun fromVersion(): MigrationVersion = MigrationVersion("1")
 
         override fun toVersion(): MigrationVersion = MigrationVersion("2")
@@ -97,7 +98,7 @@ class RawConfigMigrationTest {
         }
     }
 
-    class StepTwo : ConfigMigrationStep {
+    class StepTwo : IConfigMigrationStep {
         override fun fromVersion(): MigrationVersion = MigrationVersion("2")
 
         override fun toVersion(): MigrationVersion = MigrationVersion("3")
@@ -136,7 +137,7 @@ class RawConfigMigrationTest {
         var name: String = "default"
     }
 
-    class StepOneOnly : ConfigMigrationStep {
+    class StepOneOnly : IConfigMigrationStep {
         override fun fromVersion(): MigrationVersion = MigrationVersion("1")
 
         override fun toVersion(): MigrationVersion = MigrationVersion("2")
@@ -147,7 +148,7 @@ class RawConfigMigrationTest {
         }
     }
 
-    class CommentStep : CommentedConfigMigrationStep {
+    class CommentStep : ICommentedConfigMigrationStep {
         override fun fromVersion(): MigrationVersion = MigrationVersion("1")
 
         override fun toVersion(): MigrationVersion = MigrationVersion("2")

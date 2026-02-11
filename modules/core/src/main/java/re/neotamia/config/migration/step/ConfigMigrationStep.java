@@ -1,41 +1,28 @@
 package re.neotamia.config.migration.step;
 
 import org.jetbrains.annotations.NotNull;
-import re.neotamia.config.migration.version.MigrationVersion;
+import org.jetbrains.annotations.Nullable;
 import re.neotamia.nightconfig.core.Config;
 
+import java.util.function.Consumer;
+
 /**
- * Defines a migration step that mutates a raw NightConfig {@link Config}.
+ * Migration step backed by a {@link Consumer} that mutates a raw {@link Config}.
  */
-public interface ConfigMigrationStep {
-    /**
-     * The version this step migrates from.
-     *
-     * @return the source version
-     */
-    @NotNull MigrationVersion fromVersion();
+public class ConfigMigrationStep extends AbstractConfigMigrationStep implements IConfigMigrationStep {
+    private final Consumer<Config> migrateFunction;
 
-    /**
-     * The version this step migrates to.
-     *
-     * @return the target version
-     */
-    @NotNull MigrationVersion toVersion();
+    public ConfigMigrationStep(@NotNull String from, @NotNull String to, @NotNull Consumer<Config> migrateFunction) {
+        this(from, to, migrateFunction, null);
+    }
 
-    /**
-     * Applies the migration to the provided config.
-     *
-     * @param config the raw config to mutate
-     * @throws Exception if the migration fails
-     */
-    void migrate(@NotNull Config config) throws Exception;
+    public ConfigMigrationStep(@NotNull String from, @NotNull String to, @NotNull Consumer<Config> migrateFunction, @Nullable String description) {
+        super(from, to, description);
+        this.migrateFunction = migrateFunction;
+    }
 
-    /**
-     * Optional description for logs/debugging.
-     *
-     * @return the description string
-     */
-    default @NotNull String description() {
-        return fromVersion() + " -> " + toVersion();
+    @Override
+    public void migrate(@NotNull Config config) throws Exception {
+        migrateFunction.accept(config);
     }
 }
