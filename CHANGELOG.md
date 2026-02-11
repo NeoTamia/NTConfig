@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.2](https://github.com/NeoTamia/NTConfig/compare/v0.1.1...v0.1.2) (2026-02-11)
+
+
+### ♻️ Code Refactoring
+
+* **core:** Update migration step interfaces and simplify configuration migration framework ([349c115](https://github.com/NeoTamia/NTConfig/commit/349c115d5aae24638a30ed8f0431b19c0e2dd9a0))
+* **migration:** Replace ConfigMigrationStep with IConfigMigrationStep in migration classes ([77afe6d](https://github.com/NeoTamia/NTConfig/commit/77afe6d96c9d9fdb32a298d7d8c759dcd3711920))
+
 ## [0.1.1](https://github.com/NeoTamia/NTConfig/compare/v0.1.0...v0.1.1) (2026-02-08)
 
 
