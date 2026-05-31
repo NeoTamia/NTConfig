@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.1.2](https://github.com/NeoTamia/NTConfig/compare/v0.1.1...v0.1.2) (2026-05-31)
+
+
+### ♻️ Code Refactoring
+
+* **core:** Update migration step interfaces and simplify configuration migration framework ([349c115](https://github.com/NeoTamia/NTConfig/commit/349c115d5aae24638a30ed8f0431b19c0e2dd9a0))
+* **migration:** Replace ConfigMigrationStep with IConfigMigrationStep in migration classes ([77afe6d](https://github.com/NeoTamia/NTConfig/commit/77afe6d96c9d9fdb32a298d7d8c759dcd3711920))
+
+
+### 🔧 Build System
+
+* **deps:** Bump Kotlin version to 2.3.21 in build configuration ([3652a38](https://github.com/NeoTamia/NTConfig/commit/3652a38f0fcf030016c55777d3e79dd10df249b5))
+* **deps:** Bump Shadow plugin version to 9.4.1 in build configuration ([fdabf0a](https://github.com/NeoTamia/NTConfig/commit/fdabf0aed89ff3aeaf9893d559ee5dfac82f3eea))
+* **deps:** Update dependency com.gradleup.shadow:shadow-gradle-plugin to v9.3.2 ([#27](https://github.com/NeoTamia/NTConfig/issues/27)) ([a85a929](https://github.com/NeoTamia/NTConfig/commit/a85a9299d89ca1a06ac2372350e82b9b672fa518))
+* **deps:** Update dependency com.gradleup.shadow:shadow-gradle-plugin to v9.4.2 ([#36](https://github.com/NeoTamia/NTConfig/issues/36)) ([473b7bf](https://github.com/NeoTamia/NTConfig/commit/473b7bf1169d46f2eb8316ff72c4a98ba0447dfd))
+* **deps:** Update dependency org.jetbrains.kotlin.jvm to v2.3.20 ([#32](https://github.com/NeoTamia/NTConfig/issues/32)) ([243a394](https://github.com/NeoTamia/NTConfig/commit/243a394e6699715e9f922539a185d877be7269e2))
+* **deps:** Update gradle to v9.4.1 ([#29](https://github.com/NeoTamia/NTConfig/issues/29)) ([5bbfa20](https://github.com/NeoTamia/NTConfig/commit/5bbfa20a9407e35d3fe9910898da8fa236a08fab))
+* **deps:** Update gradle to v9.5.1 ([#35](https://github.com/NeoTamia/NTConfig/issues/35)) ([a326546](https://github.com/NeoTamia/NTConfig/commit/a326546687d225c7f8e16279c760526534b30d5d))
+
 ## [0.1.1](https://github.com/NeoTamia/NTConfig/compare/v0.1.0...v0.1.1) (2026-02-08)
 
 
