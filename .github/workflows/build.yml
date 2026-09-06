@@ -39,7 +39,7 @@ concurrency:
 jobs:
   build-and-publish:
     name: Build and Publish
-    uses: NeoTamia/actions/.github/workflows/jvm-build-and-publish.yml@main
+    uses: NeoTamia/actions/.github/workflows/jvm-build-and-publish.yml@a9b2cf9e519984fe1b6bf8e654f0c6bb379e4da4 # main
     with:
       publish: ${{ startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch' }}
       release: ${{ startsWith(github.ref, 'refs/tags/v') || github.event.inputs.release == 'true' }}
